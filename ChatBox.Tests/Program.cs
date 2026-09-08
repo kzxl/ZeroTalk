@@ -40,6 +40,12 @@ namespace ChatBox.Tests
             RunTest("Storage: UserStore & MessageStore Persistence", StorageTests.RunAll);
             RunTest("Video: Synthetic Camera Frame Generation & JPEG Compression", VideoSourceTests.RunAll);
 
+            // Algorithmic & Invariant Suites (test-logic standard)
+            RunTest("Algorithm: STUN RFC 5389 Binary Decoding & XOR Endpoint Parsing", AlgorithmTests.RunStunTests);
+            RunTest("Algorithm: File Chunking BVA & Out-of-Order Reassembly", AlgorithmTests.RunChunkingTests);
+            RunTest("Algorithm: Cryptographic Invariants (ECDH Commutativity & IV Entropy)", AlgorithmTests.RunCryptoInvariantTests);
+            RunTest("Algorithm: Radar Sweep Trigonometric Periodic Geometry", AlgorithmTests.RunGeometryTests);
+
             Console.WriteLine("--------------------------------------------------");
             Console.WriteLine($"Summary: {passed} passed, {failed} failed.");
             Console.WriteLine("==================================================");

@@ -13,3 +13,4 @@ using System.Runtime.InteropServices;
 [assembly: Guid("a1b2c3d4-1111-1111-1111-000000000001")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("ChatBox.Tests")]

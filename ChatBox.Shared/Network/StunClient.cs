@@ -120,7 +120,7 @@ namespace ChatBox.Shared.Network
             return ParseBindingResponse(response, transactionId);
         }
 
-        private static IPEndPoint ParseBindingResponse(byte[] data, byte[] transactionId)
+        internal static IPEndPoint ParseBindingResponse(byte[] data, byte[] transactionId)
         {
             if (data == null || data.Length < 20)
                 return null;
