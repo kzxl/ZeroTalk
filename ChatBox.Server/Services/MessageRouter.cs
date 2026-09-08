@@ -8,7 +8,7 @@ using ChatBox.Shared.Protocol;
 namespace ChatBox.Server.Services
 {
     /// <summary>
-    /// Route tin nhắn đến đúng client hoặc broadcast
+    /// Routes packets to specific clients or broadcasts across the network.
     /// </summary>
     public class MessageRouter : IMessageRouter
     {
@@ -22,7 +22,7 @@ namespace ChatBox.Server.Services
         }
 
         /// <summary>
-        /// Gửi packet đến 1 client cụ thể
+        /// Sends packet to a specific client
         /// </summary>
         public void SendToClient(string userId, Packet packet)
         {
@@ -35,13 +35,13 @@ namespace ChatBox.Server.Services
                 }
                 catch (Exception ex)
                 {
-                    _log?.Invoke($"[ERROR] Gửi packet đến {userId} thất bại: {ex.Message}");
+                    _log?.Invoke($"[ERROR] Failed to send packet to {userId}: {ex.Message}");
                 }
             }
         }
 
         /// <summary>
-        /// Gửi packet đến tất cả client (trừ sender)
+        /// Broadcasts packet to all connected clients (except excluded user)
         /// </summary>
         public void Broadcast(Packet packet, string excludeUserId = null)
         {
@@ -56,13 +56,13 @@ namespace ChatBox.Server.Services
                 }
                 catch (Exception ex)
                 {
-                    _log?.Invoke($"[ERROR] Broadcast đến {kvp.Key} thất bại: {ex.Message}");
+                    _log?.Invoke($"[ERROR] Broadcast to {kvp.Key} failed: {ex.Message}");
                 }
             }
         }
 
         /// <summary>
-        /// Gửi danh sách user online cho tất cả client.
+        /// Broadcasts online user list to all connected clients.
         /// Data = "user1|DisplayName1,user2|DisplayName2,..."
         /// </summary>
         public void BroadcastUserList()

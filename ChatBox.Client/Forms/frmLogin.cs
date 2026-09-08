@@ -10,7 +10,7 @@ using ChatBox.Shared.Protocol;
 namespace ChatBox.Client.Forms
 {
     /// <summary>
-    /// Form đăng nhập / đăng ký, hỗ trợ đăng nhập 1-click cho tài khoản Demo.
+    /// Login and registration form with 1-click quick demo authentication.
     /// </summary>
     public partial class frmLogin : Form
     {
@@ -89,7 +89,7 @@ namespace ChatBox.Client.Forms
         {
             if (string.IsNullOrWhiteSpace(txtUsername.Text) || string.IsNullOrWhiteSpace(txtPassword.Text))
             {
-                lblStatus.Text = "Vui lòng nhập username và password";
+                lblStatus.Text = "Please enter username and password";
                 lblStatus.ForeColor = System.Drawing.Color.Orange;
                 return;
             }
@@ -97,18 +97,18 @@ namespace ChatBox.Client.Forms
             btnLogin.Enabled = false;
             btnRegister.Enabled = false;
             pnlDemo.Enabled = false;
-            lblStatus.Text = "Đang kết nối...";
+            lblStatus.Text = "Connecting to server...";
             lblStatus.ForeColor = System.Drawing.Color.Gray;
 
             try
             {
-                // 1. Kết nối TCP
+                // 1. Establish TCP connection
                 if (!_tcpService.IsConnected)
                 {
                     var connected = await _tcpService.ConnectAsync(txtServer.Text, (int)nudPort.Value);
                     if (!connected)
                     {
-                        lblStatus.Text = "Không thể kết nối đến server";
+                        lblStatus.Text = "Cannot connect to server";
                         lblStatus.ForeColor = System.Drawing.Color.Red;
                         return;
                     }
@@ -122,7 +122,7 @@ namespace ChatBox.Client.Forms
                     passwordHash = Convert.ToBase64String(bytes);
                 }
 
-                // 3. Gửi packet Login/Register
+                // 3. Send Login/Register packet
                 var authPayload = new Dictionary<string, object>
                 {
                     { "Username", txtUsername.Text.Trim() },
@@ -132,7 +132,7 @@ namespace ChatBox.Client.Forms
                 var data = PacketSerializer.ToJson(authPayload);
                 var packet = new Packet(authType, null, null, data);
 
-                // Subscribe nhận response 1 lần
+                // Single-response subscriber
                 Action<Packet> handler = null;
                 var tcs = new TaskCompletionSource<Packet>();
                 handler = p =>
@@ -146,16 +146,16 @@ namespace ChatBox.Client.Forms
                 _tcpService.OnPacketReceived += handler;
 
                 _tcpService.SendPacket(packet);
-                lblStatus.Text = authType == PacketType.Login ? "Đang đăng nhập..." : "Đang đăng ký...";
+                lblStatus.Text = authType == PacketType.Login ? "Signing in..." : "Registering...";
 
-                // 4. Chờ response (timeout 10s)
+                // 4. Wait for response (10s timeout)
                 var timeoutTask = Task.Delay(10000);
                 var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
                 if (completedTask == timeoutTask)
                 {
                     _tcpService.OnPacketReceived -= handler;
-                    lblStatus.Text = "Timeout - server không phản hồi";
+                    lblStatus.Text = "Timeout - Server did not respond";
                     lblStatus.ForeColor = System.Drawing.Color.Red;
                     return;
                 }
@@ -190,13 +190,13 @@ namespace ChatBox.Client.Forms
                 }
                 else
                 {
-                    lblStatus.Text = message ?? "Đăng nhập thất bại";
+                    lblStatus.Text = message ?? "Authentication failed";
                     lblStatus.ForeColor = System.Drawing.Color.Red;
                 }
             }
             catch (Exception ex)
             {
-                lblStatus.Text = $"Lỗi: {ex.Message}";
+                lblStatus.Text = $"Error: {ex.Message}";
                 lblStatus.ForeColor = System.Drawing.Color.Red;
             }
             finally

@@ -128,7 +128,7 @@ namespace ChatBox.Client.Forms
             this.btnToggleVideo.Name = "btnToggleVideo";
             this.btnToggleVideo.Size = new System.Drawing.Size(85, 39);
             this.btnToggleVideo.TabIndex = 3;
-            this.btnToggleVideo.Text = "📷 Tắt Cam";
+            this.btnToggleVideo.Text = "📷 Cam Off";
             this.btnToggleVideo.UseVisualStyleBackColor = false;
             this.btnToggleVideo.Click += new System.EventHandler(this.btnToggleVideo_Click);
             // 
@@ -143,7 +143,7 @@ namespace ChatBox.Client.Forms
             this.btnRecord.Name = "btnRecord";
             this.btnRecord.Size = new System.Drawing.Size(75, 39);
             this.btnRecord.TabIndex = 1;
-            this.btnRecord.Text = "⏺ Ghi";
+            this.btnRecord.Text = "⏺ Record";
             this.btnRecord.UseVisualStyleBackColor = false;
             this.btnRecord.Click += new System.EventHandler(this.btnRecord_Click);
             // 
@@ -159,7 +159,7 @@ namespace ChatBox.Client.Forms
             this.btnEndCall.Name = "btnEndCall";
             this.btnEndCall.Size = new System.Drawing.Size(80, 39);
             this.btnEndCall.TabIndex = 0;
-            this.btnEndCall.Text = "📞 Dừng";
+            this.btnEndCall.Text = "📞 End Call";
             this.btnEndCall.UseVisualStyleBackColor = false;
             this.btnEndCall.Click += new System.EventHandler(this.btnEndCall_Click);
             // 
@@ -172,7 +172,7 @@ namespace ChatBox.Client.Forms
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(135, 39);
             this.lblStatus.TabIndex = 2;
-            this.lblStatus.Text = "📹 Đang đàm thoại";
+            this.lblStatus.Text = "📹 In Call";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // tmrCallDuration

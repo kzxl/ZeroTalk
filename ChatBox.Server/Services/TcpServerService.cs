@@ -61,14 +61,14 @@ namespace ChatBox.Server.Services
             IsRunning = true;
             StartTime = DateTime.Now;
 
-            Log($"Server đã khởi động trên port {port}");
+            Log($"Server started on port {port}");
 
-            // Accept connections trong background
+            // Accept connections in background
             Task.Run(() => AcceptClientsAsync(_cts.Token));
         }
 
         /// <summary>
-        /// Dừng server và ngắt tất cả client
+        /// Stop server and disconnect all clients
         /// </summary>
         public void Stop()
         {
@@ -77,7 +77,7 @@ namespace ChatBox.Server.Services
             _cts?.Cancel();
             IsRunning = false;
 
-            // Ngắt tất cả client
+            // Disconnect all clients
             foreach (var kvp in _clients)
             {
                 try
@@ -94,12 +94,12 @@ namespace ChatBox.Server.Services
             }
             catch { }
 
-            Log("Server đã dừng");
+            Log("Server stopped");
             OnClientListChanged?.Invoke();
         }
 
         /// <summary>
-        /// Vòng lặp accept client mới
+        /// Asynchronously accept new clients
         /// </summary>
         private async Task AcceptClientsAsync(CancellationToken ct)
         {
@@ -118,7 +118,7 @@ namespace ChatBox.Server.Services
                     };
 
                     _clients.TryAdd(connectionId, client);
-                    Log($"[CONNECT] Client mới: {client.EndPoint} (ID: {connectionId})");
+                    Log($"[CONNECT] New client connected: {client.EndPoint} (ID: {connectionId})");
                     OnClientListChanged?.Invoke();
 
                     // Xử lý client trong Task riêng
@@ -249,14 +249,14 @@ namespace ChatBox.Server.Services
 
                 _clients.TryAdd(response.UserId, client);
 
-                Log($"[LOGIN] {request.Username} đăng nhập thành công (ID: {response.UserId})");
+                Log($"[LOGIN] User '{request.Username}' authenticated successfully (ID: {response.UserId})");
             }
             else
             {
                 Log($"[LOGIN FAILED] {request.Username}: {response.Message}");
             }
 
-            // Gửi response về client
+            // Send response back to client
             var responseData = PacketSerializer.ToJson(response);
             var responsePacket = new Packet(PacketType.LoginResponse, "server", connectionId, responseData);
             PacketSerializer.SendPacket(client.Stream, responsePacket);
@@ -264,7 +264,7 @@ namespace ChatBox.Server.Services
 
             if (response.Success)
             {
-                // Delay nhỏ để client có thời gian mở frmChat và subscribe events
+                // Brief delay to allow client to open frmChat and subscribe to events
                 Task.Run(async () =>
                 {
                     await Task.Delay(500);
@@ -275,7 +275,7 @@ namespace ChatBox.Server.Services
         }
 
         /// <summary>
-        /// Xử lý đăng ký
+        /// Handle registration
         /// </summary>
         private void HandleRegister(string connectionId, ConnectedClient client, Packet packet)
         {
@@ -291,7 +291,7 @@ namespace ChatBox.Server.Services
         }
 
         /// <summary>
-        /// Forward packet từ sender đến receiver
+        /// Forward packet from sender to receiver
         /// </summary>
         private void HandleForward(ConnectedClient sender, Packet packet)
         {
@@ -317,7 +317,7 @@ namespace ChatBox.Server.Services
         }
 
         /// <summary>
-        /// Ngắt kết nối client (public để hỗ trợ Kick từ server UI)
+        /// Disconnect client (public for admin Kick support)
         /// </summary>
         public void DisconnectClient(string connectionId)
         {
@@ -326,7 +326,7 @@ namespace ChatBox.Server.Services
             {
                 try { client.TcpClient?.Close(); } catch { }
 
-                Log($"[DISCONNECT] {client.DisplayName ?? client.Username ?? connectionId} đã ngắt kết nối");
+                Log($"[DISCONNECT] Client disconnected: {client.DisplayName ?? client.Username ?? connectionId}");
 
                 if (client.IsAuthenticated)
                 {
@@ -343,7 +343,7 @@ namespace ChatBox.Server.Services
         }
 
         /// <summary>
-        /// Lưu tin nhắn vào MessageStore (chỉ Message và GroupMessage)
+        /// Save message to store
         /// </summary>
         private void SaveMessageToStore(ConnectedClient sender, Packet packet)
         {
@@ -359,7 +359,7 @@ namespace ChatBox.Server.Services
         }
 
         /// <summary>
-        /// Client yêu cầu lịch sử chat → server trả về ChatHistoryResponse
+        /// Handle history request
         /// </summary>
         private void HandleChatHistoryRequest(string connectionId, ConnectedClient client, Packet packet)
         {
@@ -378,7 +378,7 @@ namespace ChatBox.Server.Services
             var response = new Packet(PacketType.ChatHistoryResponse, "SERVER", client.UserId, PacketSerializer.ToJson(historyPayload));
             PacketSerializer.SendPacket(client.Stream, response);
             client.PacketsSent++;
-            Log($"Gửi {history.Count} tin nhắn lịch sử cho {client.DisplayName} (partner: {partnerId})");
+            Log($"Sent {history.Count} history messages to {client.DisplayName} (partner: {partnerId})");
         }
     }
 }

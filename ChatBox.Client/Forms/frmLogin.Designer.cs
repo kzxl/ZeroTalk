@@ -137,7 +137,7 @@ namespace ChatBox.Client.Forms
             this.lblDemo.Name = "lblDemo";
             this.lblDemo.Size = new System.Drawing.Size(201, 13);
             this.lblDemo.TabIndex = 11;
-            this.lblDemo.Text = "⚡ Tài khoản thử nghiệm (1-Click Demo):";
+            this.lblDemo.Text = "⚡ Quick Demo Accounts (1-Click):";
             // 
             // btnRegister
             // 
@@ -150,7 +150,7 @@ namespace ChatBox.Client.Forms
             this.btnRegister.Name = "btnRegister";
             this.btnRegister.Size = new System.Drawing.Size(290, 30);
             this.btnRegister.TabIndex = 10;
-            this.btnRegister.Text = "Đăng ký tài khoản mới";
+            this.btnRegister.Text = "Register New Account";
             this.btnRegister.UseVisualStyleBackColor = false;
             this.btnRegister.Click += new System.EventHandler(this.btnRegister_Click);
             // 
@@ -165,7 +165,7 @@ namespace ChatBox.Client.Forms
             this.btnLogin.Name = "btnLogin";
             this.btnLogin.Size = new System.Drawing.Size(290, 38);
             this.btnLogin.TabIndex = 9;
-            this.btnLogin.Text = "Đăng nhập";
+            this.btnLogin.Text = "Sign In";
             this.btnLogin.UseVisualStyleBackColor = false;
             this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
             // 
@@ -293,7 +293,7 @@ namespace ChatBox.Client.Forms
             this.MaximizeBox = false;
             this.Name = "frmLogin";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "ChatBox - Đăng nhập";
+            this.Text = "ChatBox - Sign In";
             this.pnlMain.ResumeLayout(false);
             this.pnlMain.PerformLayout();
             this.pnlDemo.ResumeLayout(false);

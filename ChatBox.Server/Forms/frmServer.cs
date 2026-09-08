@@ -9,7 +9,7 @@ using ChatBox.Shared.Network;
 namespace ChatBox.Server.Forms
 {
     /// <summary>
-    /// Server dashboard - hiển thị trạng thái, danh sách client, log
+    /// Server dashboard - monitors server status, active connections, and activity logs.
     /// </summary>
     public partial class frmServer : Form
     {
@@ -28,9 +28,9 @@ namespace ChatBox.Server.Forms
             _serverService.OnLog += AppendLog;
             _serverService.OnClientListChanged += RefreshClientList;
 
-            // Hiển thị local IP lúc mở
+            // Display local IP upon startup
             string localIp = StunClient.GetLocalIPAddress()?.ToString() ?? "127.0.0.1";
-            lblStats.Text = $"⏱ Uptime: --:--:-- | 📦 Gói tin đã chuyển: 0 | 🌐 Local IP: {localIp}:{(int)nudPort.Value}";
+            lblStats.Text = $"⏱ Uptime: --:--:-- | 📦 Routed Packets: 0 | 🌐 Local IP: {localIp}:{(int)nudPort.Value}";
         }
 
         protected override void OnLoad(EventArgs e)
@@ -52,7 +52,7 @@ namespace ChatBox.Server.Forms
                 btnStart.Enabled = false;
                 btnStop.Enabled = true;
                 nudPort.Enabled = false;
-                lblStatus.Text = "● Server đang chạy";
+                lblStatus.Text = "● Server Running";
                 lblStatus.ForeColor = System.Drawing.Color.LimeGreen;
 
                 tmrStats.Start();
@@ -60,8 +60,8 @@ namespace ChatBox.Server.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Không thể khởi động server: {ex.Message}",
-                    "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Cannot start server: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -72,10 +72,10 @@ namespace ChatBox.Server.Forms
             btnStart.Enabled = true;
             btnStop.Enabled = false;
             nudPort.Enabled = true;
-            lblStatus.Text = "● Server dừng";
+            lblStatus.Text = "● Server Stopped";
             lblStatus.ForeColor = System.Drawing.Color.Gray;
             RefreshClientList();
-            lblStats.Text = "⏱ Uptime: --:--:-- | 📦 Gói tin đã chuyển: 0 | 🌐 Server đã dừng";
+            lblStats.Text = "⏱ Uptime: --:--:-- | 📦 Routed Packets: 0 | 🌐 Server Stopped";
         }
 
         private void AppendLog(string message)
@@ -133,13 +133,13 @@ namespace ChatBox.Server.Forms
             if (!string.IsNullOrEmpty(userId))
             {
                 var confirm = MessageBox.Show(
-                    $"Bạn có chắc chắn muốn ngắt kết nối client '{userName}' không?",
-                    "Xác nhận Kick", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    $"Are you sure you want to disconnect client '{userName}'?",
+                    "Confirm Disconnect", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
                 if (confirm == DialogResult.Yes)
                 {
                     _serverService.DisconnectClient(userId);
-                    AppendLog($"[ADMIN] Đã ngắt kết nối client: {userName} (ID: {userId})");
+                    AppendLog($"[ADMIN] Disconnected client: {userName} (ID: {userId})");
                 }
             }
         }
@@ -166,24 +166,24 @@ namespace ChatBox.Server.Forms
 
                 if (!File.Exists(clientExe))
                 {
-                    MessageBox.Show($"Không tìm thấy file ChatBox.Client.exe tại: {clientExe}\nVui lòng build solution trước.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"ChatBox.Client.exe not found at: {clientExe}\nPlease build the solution first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                // Khởi chạy Alice
+                // Launch Alice
                 System.Diagnostics.Process.Start(clientExe, "demo_alice");
 
-                // Khởi chạy Bob sau 400ms
+                // Launch Bob after 400ms
                 System.Threading.Tasks.Task.Delay(400).ContinueWith(_ =>
                 {
                     try { System.Diagnostics.Process.Start(clientExe, "demo_bob"); } catch { }
                 });
 
-                AppendLog("[ADMIN] Đã gửi lệnh khởi chạy 2 client demo (Alice & Bob)");
+                AppendLog("[ADMIN] Dispatched launch command for 2 demo clients (Alice & Bob)");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi khởi chạy client: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error launching clients: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -194,7 +194,7 @@ namespace ChatBox.Server.Forms
                 var uptime = DateTime.Now - _serverService.StartTime.Value;
                 string uptimeStr = string.Format("{0:D2}:{1:D2}:{2:D2}", (int)uptime.TotalHours, uptime.Minutes, uptime.Seconds);
                 string localIp = StunClient.GetLocalIPAddress()?.ToString() ?? "127.0.0.1";
-                lblStats.Text = $"⏱ Uptime: {uptimeStr} | 📦 Gói tin đã chuyển: {_serverService.TotalMessagesRouted} | 👥 Đang kết nối: {_serverService.ConnectedCount} | 🌐 Local IP: {localIp}:{(int)nudPort.Value}";
+                lblStats.Text = $"⏱ Uptime: {uptimeStr} | 📦 Routed Packets: {_serverService.TotalMessagesRouted} | 👥 Connected: {_serverService.ConnectedCount} | 🌐 Local IP: {localIp}:{(int)nudPort.Value}";
             }
         }
 
@@ -203,8 +203,8 @@ namespace ChatBox.Server.Forms
             if (_serverService.IsRunning)
             {
                 var result = MessageBox.Show(
-                    "Server đang chạy. Bạn có muốn dừng và thoát?",
-                    "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    "Server is running. Are you sure you want to stop and exit?",
+                    "Confirm Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == DialogResult.No)
                 {

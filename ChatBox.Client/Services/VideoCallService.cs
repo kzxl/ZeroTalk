@@ -75,12 +75,12 @@ namespace ChatBox.Client.Services
         }
 
         /// <summary>
-        /// Bật/tắt truyền camera
+        /// Enable or disable camera transmission
         /// </summary>
         public void ToggleVideo(bool enabled)
         {
             IsVideoEnabled = enabled;
-            Log(enabled ? "📷 Đã bật camera" : "📷 Đã tắt camera");
+            Log(enabled ? "📷 Camera enabled" : "📷 Camera disabled");
         }
 
         private void StartCapturing()
@@ -94,7 +94,7 @@ namespace ChatBox.Client.Services
             if (!_videoSource.IsRunning)
             {
                 _videoSource.Start(320, 240, 15);
-                Log($"▶ Đã khởi động nguồn video: {_videoSource.SourceName}");
+                Log($"▶ Video source started: {_videoSource.SourceName}");
             }
         }
 
@@ -103,7 +103,7 @@ namespace ChatBox.Client.Services
             if (_videoSource != null && _videoSource.IsRunning)
             {
                 _videoSource.Stop();
-                Log("⏹ Đã dừng nguồn phát video");
+                Log("⏹ Video source stopped");
             }
         }
 
@@ -118,14 +118,14 @@ namespace ChatBox.Client.Services
         }
 
         /// <summary>
-        /// Gửi yêu cầu gọi video. Discover endpoint qua STUN trước.
+        /// Initiate video call request. Discover endpoint via STUN first.
         /// </summary>
         public void StartCall(string targetUserId)
         {
             if (IsInCall) return;
 
             CurrentCallPartner = targetUserId;
-            Log("Đang khám phá network endpoint (STUN)...");
+            Log("Discovering network endpoint (STUN)...");
 
             // Discover endpoints async
             Task.Run(() =>
@@ -140,7 +140,7 @@ namespace ChatBox.Client.Services
                 if (!string.IsNullOrEmpty(publicIp))
                     Log($"Public endpoint: {publicIp}:{publicPort}");
                 else
-                    Log("Không thể discover public endpoint (STUN failed)");
+                    Log("Cannot discover public endpoint (STUN failed)");
 
                 Log($"Local endpoint: {localIp}:{localPort}");
 
@@ -151,17 +151,17 @@ namespace ChatBox.Client.Services
                 var packet = new Packet(PacketType.VideoCallRequest, _chatService.CurrentUserId, targetUserId, data);
                 _tcpService.SendPacket(packet);
 
-                Log("Đã gửi yêu cầu gọi video...");
+                Log("Video call request sent...");
             });
         }
 
         /// <summary>
-        /// Chấp nhận cuộc gọi. Discover endpoint, reply, rồi bắt đầu hole punch.
+        /// Accept incoming call. Discover endpoint, reply, and begin UDP hole punching.
         /// </summary>
         public void AcceptCall(string callerUserId)
         {
             CurrentCallPartner = callerUserId;
-            Log("Đang chuẩn bị kết nối...");
+            Log("Preparing connection...");
 
             Task.Run(async () =>
             {
@@ -258,12 +258,12 @@ namespace ChatBox.Client.Services
                     StartCapturing();
                     OnCallAccepted?.Invoke();
 
-                    // Bắt đầu P2P connection
+                    // Begin P2P connection
                     Task.Run(async () => await AttemptP2PConnection());
                     break;
 
                 case PacketType.VideoCallReject:
-                    OnCallRejected?.Invoke("Cuộc gọi bị từ chối");
+                    OnCallRejected?.Invoke("Call was rejected");
                     Cleanup();
                     break;
 
@@ -298,19 +298,19 @@ namespace ChatBox.Client.Services
         }
 
         /// <summary>
-        /// Thử kết nối P2P qua UDP hole punching.
-        /// Nếu thất bại → fallback server relay.
+        /// Attempt P2P connection via UDP hole punching.
+        /// If failed, fall back to Server Relay.
         /// </summary>
         private async Task AttemptP2PConnection()
         {
             if (_udpPeer == null)
             {
                 UseRelay = true;
-                Log("⚠️ Dùng Server Relay (UDP chưa khởi tạo)");
+                Log("⚠️ Using Server Relay (UDP not initialized)");
                 return;
             }
 
-            Log("🔗 Đang thử kết nối P2P (UDP hole punching)...");
+            Log("🔗 Attempting P2P connection (UDP hole punching)...");
 
             bool success = await _udpPeer.HolePunchAsync(
                 _peerPublicIp, _peerPublicPort,
@@ -320,12 +320,12 @@ namespace ChatBox.Client.Services
             {
                 UseRelay = false;
                 _udpPeer.StartReceiving();
-                Log("✅ Kết nối P2P thành công! Video stream trực tiếp qua UDP");
+                Log("✅ P2P connected successfully! Direct UDP streaming");
             }
             else
             {
                 UseRelay = true;
-                Log("⚠️ P2P thất bại, chuyển sang Server Relay (TCP)");
+                Log("⚠️ P2P failed, falling back to Server Relay (TCP)");
             }
         }
 

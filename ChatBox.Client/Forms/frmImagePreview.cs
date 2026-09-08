@@ -7,7 +7,7 @@ using ChatBox.Client.Services;
 namespace ChatBox.Client.Forms
 {
     /// <summary>
-    /// Form xem trước ảnh đính kèm nhận qua chat.
+    /// Preview window for image attachments received via chat.
     /// </summary>
     public partial class frmImagePreview : Form
     {
@@ -24,7 +24,7 @@ namespace ChatBox.Client.Forms
         {
             if (!File.Exists(_filePath))
             {
-                lblInfo.Text = "Không tìm thấy file hình ảnh";
+                lblInfo.Text = "Image file not found";
                 return;
             }
 
@@ -35,13 +35,13 @@ namespace ChatBox.Client.Forms
                 using (var img = Image.FromStream(fs))
                 {
                     picPreview.Image = new Bitmap(img);
-                    this.Text = $"Xem ảnh: {fi.Name} ({img.Width}x{img.Height})";
+                    this.Text = $"Image: {fi.Name} ({img.Width}x{img.Height})";
                     lblInfo.Text = $"{fi.Name} — {img.Width}x{img.Height} px | {FormatBytes(fi.Length)}";
                 }
             }
             catch (Exception ex)
             {
-                lblInfo.Text = $"Lỗi tải ảnh: {ex.Message}";
+                lblInfo.Text = $"Error loading image: {ex.Message}";
             }
         }
 

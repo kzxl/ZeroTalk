@@ -76,7 +76,7 @@ namespace ChatBox.Client.Forms
             this.btnOpenExternal.Name = "btnOpenExternal";
             this.btnOpenExternal.Size = new System.Drawing.Size(100, 32);
             this.btnOpenExternal.TabIndex = 1;
-            this.btnOpenExternal.Text = "Mở file";
+            this.btnOpenExternal.Text = "Open File";
             this.btnOpenExternal.UseVisualStyleBackColor = false;
             this.btnOpenExternal.Click += new System.EventHandler(this.btnOpenExternal_Click);
             // 
@@ -93,7 +93,7 @@ namespace ChatBox.Client.Forms
             this.btnOpenFolder.Name = "btnOpenFolder";
             this.btnOpenFolder.Size = new System.Drawing.Size(105, 32);
             this.btnOpenFolder.TabIndex = 2;
-            this.btnOpenFolder.Text = "Thư mục";
+            this.btnOpenFolder.Text = "Open Folder";
             this.btnOpenFolder.UseVisualStyleBackColor = false;
             this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
             // 
@@ -110,7 +110,7 @@ namespace ChatBox.Client.Forms
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(69, 32);
             this.btnClose.TabIndex = 3;
-            this.btnClose.Text = "Đóng";
+            this.btnClose.Text = "Close";
             this.btnClose.UseVisualStyleBackColor = false;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
@@ -126,7 +126,7 @@ namespace ChatBox.Client.Forms
             this.MinimumSize = new System.Drawing.Size(480, 360);
             this.Name = "frmImagePreview";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Xem trước hình ảnh";
+            this.Text = "Image Preview";
             ((System.ComponentModel.ISupportInitialize)(this.picPreview)).EndInit();
             this.pnlBottom.ResumeLayout(false);
             this.ResumeLayout(false);

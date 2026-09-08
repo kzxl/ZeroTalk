@@ -8,8 +8,8 @@ using ChatBox.Client.Services;
 namespace ChatBox.Client.Forms
 {
     /// <summary>
-    /// Form gọi video - hỗ trợ hiển thị video từ xa và local Picture-in-Picture (PIP).
-    /// Hỗ trợ nguồn video Synthetic Camera & Screen Share.
+    /// Video call window - supports remote stream and local Picture-in-Picture (PIP).
+    /// Supports Synthetic Camera and Screen Share video sources.
     /// </summary>
     public partial class frmVideoCall : Form
     {
@@ -32,7 +32,7 @@ namespace ChatBox.Client.Forms
             _callStartTime = DateTime.Now;
             tmrCallDuration.Start();
 
-            // Khởi tạo nguồn video mặc định
+            // Initialize default video source
             if (cmbVideoSource.Items.Count > 0)
             {
                 cmbVideoSource.SelectedIndex = 0;
@@ -120,8 +120,8 @@ namespace ChatBox.Client.Forms
                 _isRecording = false;
             }
 
-            lblStatus.Text = "📹 Cuộc gọi đã kết thúc";
-            MessageBox.Show("Cuộc gọi đã kết thúc.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            lblStatus.Text = "📹 Call Ended";
+            MessageBox.Show("Call has ended.", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
             this.Close();
         }
 
@@ -132,12 +132,12 @@ namespace ChatBox.Client.Forms
 
             if (newState)
             {
-                btnToggleVideo.Text = "📷 Tắt Cam";
+                btnToggleVideo.Text = "📷 Cam Off";
                 btnToggleVideo.BackColor = Color.FromArgb(50, 100, 180);
             }
             else
             {
-                btnToggleVideo.Text = "📷 Bật Cam";
+                btnToggleVideo.Text = "📷 Cam On";
                 btnToggleVideo.BackColor = Color.FromArgb(80, 80, 85);
                 var oldImg = pnlLocalVideo.Image;
                 pnlLocalVideo.Image = null;
@@ -204,17 +204,17 @@ namespace ChatBox.Client.Forms
 
                 _recorder.StartRecording(outputPath);
                 _isRecording = true;
-                btnRecord.Text = "⏹ Dừng";
+                btnRecord.Text = "⏹ Stop";
                 btnRecord.BackColor = Color.FromArgb(200, 50, 50);
-                lblStatus.Text = "🔴 Đang ghi";
+                lblStatus.Text = "🔴 Recording";
             }
             else
             {
                 _recorder.StopRecording();
                 _isRecording = false;
-                btnRecord.Text = "⏺ Ghi";
+                btnRecord.Text = "⏺ Record";
                 btnRecord.BackColor = Color.FromArgb(65, 65, 72);
-                lblStatus.Text = "📹 Đang đàm thoại";
+                lblStatus.Text = "📹 In Call";
             }
         }
 

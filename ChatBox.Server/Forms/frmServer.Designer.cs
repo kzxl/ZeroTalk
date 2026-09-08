@@ -81,7 +81,7 @@ namespace ChatBox.Server.Forms
             this.btnClearLog.Name = "btnClearLog";
             this.btnClearLog.Size = new System.Drawing.Size(85, 30);
             this.btnClearLog.TabIndex = 6;
-            this.btnClearLog.Text = "🗑 Xoá Log";
+            this.btnClearLog.Text = "🗑 Clear Log";
             this.btnClearLog.UseVisualStyleBackColor = false;
             this.btnClearLog.Click += new System.EventHandler(this.btnClearLog_Click);
             // 
@@ -93,11 +93,11 @@ namespace ChatBox.Server.Forms
             this.btnLaunchClients.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLaunchClients.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
             this.btnLaunchClients.ForeColor = System.Drawing.Color.White;
-            this.btnLaunchClients.Location = new System.Drawing.Point(775, 15);
+            this.btnLaunchClients.Location = new System.Drawing.Point(740, 15);
             this.btnLaunchClients.Name = "btnLaunchClients";
-            this.btnLaunchClients.Size = new System.Drawing.Size(135, 30);
+            this.btnLaunchClients.Size = new System.Drawing.Size(170, 30);
             this.btnLaunchClients.TabIndex = 5;
-            this.btnLaunchClients.Text = "🚀 Mở 2 Client Demo";
+            this.btnLaunchClients.Text = "🚀 Launch 2 Demo Clients";
             this.btnLaunchClients.UseVisualStyleBackColor = false;
             this.btnLaunchClients.Click += new System.EventHandler(this.btnLaunchClients_Click);
             // 
@@ -108,9 +108,9 @@ namespace ChatBox.Server.Forms
             this.lblStatus.ForeColor = System.Drawing.Color.Gray;
             this.lblStatus.Location = new System.Drawing.Point(375, 21);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(95, 17);
+            this.lblStatus.Size = new System.Drawing.Size(115, 17);
             this.lblStatus.TabIndex = 4;
-            this.lblStatus.Text = "● Server dừng";
+            this.lblStatus.Text = "● Server Stopped";
             // 
             // nudPort
             // 
@@ -145,7 +145,7 @@ namespace ChatBox.Server.Forms
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(100, 30);
             this.btnStop.TabIndex = 1;
-            this.btnStop.Text = "⏹ Dừng";
+            this.btnStop.Text = "⏹ Stop";
             this.btnStop.UseVisualStyleBackColor = false;
             this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 
@@ -160,7 +160,7 @@ namespace ChatBox.Server.Forms
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(100, 30);
             this.btnStart.TabIndex = 0;
-            this.btnStart.Text = "▶ Khởi động";
+            this.btnStart.Text = "▶ Start";
             this.btnStart.UseVisualStyleBackColor = false;
             this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
             // 
@@ -184,7 +184,7 @@ namespace ChatBox.Server.Forms
             this.lblStats.Name = "lblStats";
             this.lblStats.Size = new System.Drawing.Size(900, 20);
             this.lblStats.TabIndex = 0;
-            this.lblStats.Text = "⏱ Uptime: --:--:-- | 📦 Gói tin đã chuyển: 0 | 🌐 Local IP: 127.0.0.1";
+            this.lblStats.Text = "⏱ Uptime: --:--:-- | 📦 Routed Packets: 0 | 🌐 Local IP: 127.0.0.1";
             this.lblStats.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // splitContainer
@@ -238,7 +238,7 @@ namespace ChatBox.Server.Forms
             // 
             // colStatus
             // 
-            this.colStatus.Text = "Trạng thái";
+            this.colStatus.Text = "Status";
             this.colStatus.Width = 75;
             // 
             // colUser
@@ -248,22 +248,22 @@ namespace ChatBox.Server.Forms
             // 
             // colName
             // 
-            this.colName.Text = "Tên hiển thị";
+            this.colName.Text = "Display Name";
             this.colName.Width = 95;
             // 
             // colEndpoint
             // 
-            this.colEndpoint.Text = "Địa chỉ IP";
+            this.colEndpoint.Text = "Endpoint";
             this.colEndpoint.Width = 110;
             // 
             // colConnected
             // 
-            this.colConnected.Text = "Kết nối";
-            this.colConnected.Width = 70;
+            this.colConnected.Text = "Connected At";
+            this.colConnected.Width = 85;
             // 
             // colPackets
             // 
-            this.colPackets.Text = "Gói tin";
+            this.colPackets.Text = "Packets";
             this.colPackets.Width = 70;
             // 
             // cmsClients
@@ -272,20 +272,20 @@ namespace ChatBox.Server.Forms
             this.tsmiKick,
             this.tsmiRefresh});
             this.cmsClients.Name = "cmsClients";
-            this.cmsClients.Size = new System.Drawing.Size(193, 48);
+            this.cmsClients.Size = new System.Drawing.Size(180, 48);
             // 
             // tsmiKick
             // 
             this.tsmiKick.Name = "tsmiKick";
-            this.tsmiKick.Size = new System.Drawing.Size(192, 22);
-            this.tsmiKick.Text = "⛔ Kick / Ngắt kết nối";
+            this.tsmiKick.Size = new System.Drawing.Size(179, 22);
+            this.tsmiKick.Text = "⛔ Kick / Disconnect";
             this.tsmiKick.Click += new System.EventHandler(this.tsmiKick_Click);
             // 
             // tsmiRefresh
             // 
             this.tsmiRefresh.Name = "tsmiRefresh";
-            this.tsmiRefresh.Size = new System.Drawing.Size(192, 22);
-            this.tsmiRefresh.Text = "🔄 Làm mới danh sách";
+            this.tsmiRefresh.Size = new System.Drawing.Size(179, 22);
+            this.tsmiRefresh.Text = "🔄 Refresh List";
             this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
             // 
             // lblClients

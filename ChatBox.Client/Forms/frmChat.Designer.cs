@@ -154,7 +154,7 @@ namespace ChatBox.Client.Forms
             this.btnSend.Name = "btnSend";
             this.btnSend.Size = new System.Drawing.Size(70, 34);
             this.btnSend.TabIndex = 1;
-            this.btnSend.Text = "Gửi ➤";
+            this.btnSend.Text = "Send ➤";
             this.btnSend.UseVisualStyleBackColor = false;
             this.btnSend.Click += new System.EventHandler(this.btnSend_Click);
             // 
@@ -212,7 +212,7 @@ namespace ChatBox.Client.Forms
             this.lblChatWith.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
             this.lblChatWith.Size = new System.Drawing.Size(696, 25);
             this.lblChatWith.TabIndex = 1;
-            this.lblChatWith.Text = "Chọn user để bắt đầu chat";
+            this.lblChatWith.Text = "Select a user to start chat";
             // 
             // btnEmoji
             // 
@@ -254,7 +254,7 @@ namespace ChatBox.Client.Forms
             this.btnGroupChat.Name = "btnGroupChat";
             this.btnGroupChat.Size = new System.Drawing.Size(190, 28);
             this.btnGroupChat.TabIndex = 5;
-            this.btnGroupChat.Text = "📢 Chat nhóm";
+            this.btnGroupChat.Text = "📢 Group Chat";
             this.btnGroupChat.UseVisualStyleBackColor = false;
             this.btnGroupChat.Click += new System.EventHandler(this.btnGroupChat_Click);
             //

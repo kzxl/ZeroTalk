@@ -11,7 +11,7 @@ using ChatBox.Shared.Protocol;
 namespace ChatBox.Client.Forms
 {
     /// <summary>
-    /// Giao diện chat chính - hiển thị user online, gửi/nhận tin nhắn, file, video call
+    /// Main chat interface - displays online users, handles messaging, file transfer, and video calls.
     /// </summary>
     public partial class frmChat : Form
     {
@@ -21,30 +21,35 @@ namespace ChatBox.Client.Forms
         private readonly FileReceiveService _fileReceiveService;
         private readonly VideoCallService _videoCallService;
         private readonly MessageHistoryService _historyService;
+        private readonly string _currentUserId;
+        private readonly string _currentDisplayName;
 
-        private string _currentUserId;
-        private string _currentDisplayName;
         private string _selectedUserId;
         private string _selectedUserName;
+        private bool _isGroupChatMode;
 
-        /// <summary>userId → displayName</summary>
-        private readonly Dictionary<string, string> _onlineUsers = new Dictionary<string, string>();
-
-        /// <summary>DH key exchange instances per user</summary>
+        // Diffie-Hellman management per peer: TargetUserId -> DH helper
         private readonly Dictionary<string, DiffieHellmanHelper> _dhInstances = new Dictionary<string, DiffieHellmanHelper>();
 
-        private frmVideoCall _activeVideoCallForm;
-        private Timer _typingSendTimer;
-        private Timer _typingDisplayTimer;
-        private bool _isGroupChatMode;
+        // Online user list: UserId -> DisplayName
+        private readonly Dictionary<string, string> _onlineUsers = new Dictionary<string, string>();
+
+        // Unread message badge: UserId -> count
         private readonly Dictionary<string, int> _unreadCounts = new Dictionary<string, int>();
 
-        /// <summary>Emoji phổ biến</summary>
+        // Active video call form instance
+        private frmVideoCall _activeVideoCallForm;
+
+        // Typing indicator timers
+        private Timer _typingSendTimer;
+        private Timer _typingDisplayTimer;
+
+        /// <summary>Common emojis</summary>
         private static readonly string[] CommonEmojis = new[]
         {
-            "😀", "😂", "🥰", "😍", "😎", "🤔", "😢", "😡",
-            "👍", "👎", "👏", "🙏", "💪", "❤️", "🔥", "✨",
-            "🎉", "😊", "😘", "🤣", "😭", "🥺", "👋", "🙌"
+            "😀", "😂", "😍", "👍", "👎", "🎉",
+            "🔥", "❤️", "😎", "🤔", "😢", "👏",
+            "🙏", "🚀", "💡", "💯", "✨", "☕"
         };
 
         public frmChat(TcpClientService tcpService, string userId, string displayName)
@@ -63,23 +68,23 @@ namespace ChatBox.Client.Forms
             _videoCallService = new VideoCallService(tcpService, _chatService);
             _historyService = new MessageHistoryService();
 
-            // Lắng nghe tiến trình truyền file
+            // File transfer progress listeners
             _fileTransferService.OnSendProgress += (fileName, current, total) =>
             {
                 if (current == total || current % 5 == 0)
                 {
-                    AppendSystem($"📤 Đang gửi \"{fileName}\": {current}/{total} chunks ({(current * 100 / total)}%)");
+                    AppendSystem($"📤 Sending \"{fileName}\": {current}/{total} chunks ({(current * 100 / total)}%)");
                 }
             };
             _fileReceiveService.OnReceiveProgress += (transferId, current, total) =>
             {
                 if (current == total || current % 5 == 0)
                 {
-                    AppendSystem($"📥 Đang nhận file: {current}/{total} chunks ({(current * 100 / total)}%)");
+                    AppendSystem($"📥 Receiving file: {current}/{total} chunks ({(current * 100 / total)}%)");
                 }
             };
 
-            lblCurrentUser.Text = $"💬 ChatBox - Đăng nhập: {displayName}";
+            lblCurrentUser.Text = $"💬 ChatBox - Signed in as: {displayName}";
             this.Text = $"ChatBox - {displayName}";
 
             // Subscribe packet handler
@@ -92,11 +97,11 @@ namespace ChatBox.Client.Forms
             _videoCallService.OnCallEnded += HandleCallEnded;
             _videoCallService.OnCallRejected += HandleCallRejected;
 
-            // Typing indicator timer: gửi mỗi 2s khi đang gõ
+            // Typing indicator timer: sends every 2s while typing
             _typingSendTimer = new Timer { Interval = 2000 };
             _typingSendTimer.Tick += (s, args) => _typingSendTimer.Stop();
 
-            // Timer ẩn typing indicator sau 3s
+            // Timer to hide typing indicator after 3s
             _typingDisplayTimer = new Timer { Interval = 3000 };
             _typingDisplayTimer.Tick += (s, args) =>
             {
@@ -104,13 +109,13 @@ namespace ChatBox.Client.Forms
                 lblTyping.Text = "";
             };
 
-            // Khi form hiện lên → gửi Heartbeat để server gửi lại UserList
+            // Request online user list via Heartbeat when shown
             this.Shown += frmChat_Shown;
         }
 
         private void frmChat_Shown(object sender, EventArgs e)
         {
-            // Gửi Heartbeat để yêu cầu server gửi danh sách user online
+            // Send Heartbeat to request online user list from server
             var heartbeat = new Packet(PacketType.Heartbeat, _currentUserId, null, null);
             _tcpService.SendPacket(heartbeat);
         }
@@ -179,7 +184,7 @@ namespace ChatBox.Client.Forms
 
         private void HandleUserList(Packet packet)
         {
-            // Lưu lại selected user trước khi clear
+            // Preserve selected user before clearing
             string previousSelectedId = _selectedUserId;
 
             _onlineUsers.Clear();
@@ -196,7 +201,7 @@ namespace ChatBox.Client.Forms
                         string uid = parts[0];
                         string name = parts[1];
 
-                        if (uid == _currentUserId) continue; // Bỏ qua chính mình
+                        if (uid == _currentUserId) continue; // Skip self
 
                         _onlineUsers[uid] = name;
                         lstUsers.Items.Add($"🟢 {name}");
@@ -206,26 +211,25 @@ namespace ChatBox.Client.Forms
 
             lblUsers.Text = $"👥 Online ({_onlineUsers.Count})";
 
-            // Kiểm tra nếu đối tượng đang chat/call đã offline
+            // Check if active chat/call partner went offline
             if (!string.IsNullOrEmpty(previousSelectedId) && !_onlineUsers.ContainsKey(previousSelectedId))
             {
-                // User đang chat đã offline
-                AppendSystem($"⚠️ {_selectedUserName ?? previousSelectedId} đã offline");
+                AppendSystem($"⚠️ {_selectedUserName ?? previousSelectedId} went offline");
 
-                // Nếu đang video call với user này → kết thúc
+                // End video call if in progress with this user
                 if (_videoCallService.IsInCall && _videoCallService.CurrentCallPartner == previousSelectedId)
                 {
                     _videoCallService.EndCall();
                     CloseVideoCallForm();
-                    AppendSystem("📹 Cuộc gọi video đã kết thúc do đối phương offline");
+                    AppendSystem("📹 Video call ended because peer went offline");
                 }
 
                 _selectedUserId = null;
                 _selectedUserName = null;
-                lblChatWith.Text = "Chọn user để bắt đầu chat";
+                lblChatWith.Text = "Select a user to start chat";
             }
 
-            // Restore selection nếu user vẫn online
+            // Restore selection if user is still online
             if (!string.IsNullOrEmpty(previousSelectedId) && _onlineUsers.ContainsKey(previousSelectedId))
             {
                 int idx = 0;
@@ -246,7 +250,7 @@ namespace ChatBox.Client.Forms
             string content = GetJsonField(packet.Data, "Content");
             bool isEncrypted = GetJsonField(packet.Data, "IsEncrypted") == "true";
 
-            // Giải mã nếu cần
+            // Decrypt if necessary
             string displayContent = _chatService.DecryptMessage(packet.SenderId, content, isEncrypted);
 
             string senderName = "Unknown";
@@ -256,7 +260,7 @@ namespace ChatBox.Client.Forms
             AppendChat(senderName, displayContent, Color.FromArgb(100, 200, 255));
             PlayNotificationSound();
 
-            // Đếm unread nếu không phải user đang chọn
+            // Count unread if not currently active user
             if (packet.SenderId != _selectedUserId)
             {
                 int count;
@@ -265,13 +269,13 @@ namespace ChatBox.Client.Forms
                 RefreshUserListBadges();
             }
 
-            // Lưu lịch sử
+            // Save history
             _historyService.SaveMessage(packet.SenderId, packet.SenderId, senderName, displayContent, false);
         }
 
         private void HandleKeyExchange(Packet packet)
         {
-            // Nhận public key từ người khác → tạo DH instance, derive shared secret, gửi lại public key
+            // Received public key -> generate DH instance, derive shared secret, send back our public key
             var otherPublicKey = packet.Data;
             var dh = new DiffieHellmanHelper();
             var sharedSecret = dh.DeriveSharedSecret(otherPublicKey);
@@ -280,23 +284,23 @@ namespace ChatBox.Client.Forms
             _chatService.SetSharedKey(packet.SenderId, sharedSecret);
             _dhInstances[packet.SenderId] = dh;
 
-            // Gửi public key response
+            // Send public key response
             var responsePacket = new Packet(PacketType.KeyExchangeResponse, _currentUserId, packet.SenderId, myPublicKey);
             _tcpService.SendPacket(responsePacket);
 
-            AppendSystem($"🔐 Đã thiết lập kênh mã hoá với {GetUserName(packet.SenderId)}");
+            AppendSystem($"🔐 Encrypted channel established with {GetUserName(packet.SenderId)}");
         }
 
         private void HandleKeyExchangeResponse(Packet packet)
         {
-            // Nhận public key response → derive shared secret
+            // Received public key response -> derive shared secret
             DiffieHellmanHelper dh;
             if (_dhInstances.TryGetValue(packet.SenderId, out dh))
             {
                 var sharedSecret = dh.DeriveSharedSecret(packet.Data);
                 _chatService.SetSharedKey(packet.SenderId, sharedSecret);
 
-                AppendSystem($"🔐 Đã thiết lập kênh mã hoá với {GetUserName(packet.SenderId)}");
+                AppendSystem($"🔐 Encrypted channel established with {GetUserName(packet.SenderId)}");
             }
         }
 
@@ -316,7 +320,7 @@ namespace ChatBox.Client.Forms
             _fileReceiveService.HandleFileHeader(packet.SenderId, senderName, fileName, fileSize, totalChunks, transferId);
 
             string sizeText = FormatFileSize(fileSize);
-            AppendSystem($"📎 {senderName} đang gửi file: {fileName} ({sizeText})");
+            AppendSystem($"📎 {senderName} is sending file: {fileName} ({sizeText})");
         }
 
         private void HandleFileChunk(Packet packet)
@@ -341,7 +345,7 @@ namespace ChatBox.Client.Forms
                 string fileName = System.IO.Path.GetFileName(savedPath);
                 string senderName = GetUserName(packet.SenderId);
 
-                AppendSystem($"✅ Đã nhận file từ {senderName}: {fileName}");
+                AppendSystem($"✅ Received file from {senderName}: {fileName}");
 
                 string ext = System.IO.Path.GetExtension(savedPath).ToLower();
                 bool isImage = ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".bmp";
@@ -360,10 +364,9 @@ namespace ChatBox.Client.Forms
                 }
                 else
                 {
-                    // Hỏi user có muốn mở file không
                     var result = MessageBox.Show(
-                        $"Đã nhận file \"{fileName}\" từ {senderName}.\n\nBạn có muốn mở file?",
-                        "File đã nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                        $"Received file \"{fileName}\" from {senderName}.\n\nDo you want to open the file?",
+                        "File Received", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
 
                     if (result == DialogResult.Yes)
                     {
@@ -371,22 +374,22 @@ namespace ChatBox.Client.Forms
                     }
                 }
 
-                // Lưu lịch sử
+                // Save to history
                 _historyService.SaveMessage(packet.SenderId, packet.SenderId, senderName,
                     $"[File] {fileName}", true);
             }
             else
             {
-                AppendSystem($"❌ Lỗi khi nhận file từ {GetUserName(packet.SenderId)}");
+                AppendSystem($"❌ Error receiving file from {GetUserName(packet.SenderId)}");
             }
         }
 
         private void HandleTypingIndicator(Packet packet)
         {
             string senderName = GetUserName(packet.SenderId);
-            lblTyping.Text = $"✏️ {senderName} đang nhập...";
+            lblTyping.Text = $"✏️ {senderName} is typing...";
             _typingDisplayTimer.Stop();
-            _typingDisplayTimer.Start(); // Ẩn sau 3s
+            _typingDisplayTimer.Start(); // Hide after 3s
         }
 
         private void HandleGroupMessage(Packet packet)
@@ -394,10 +397,10 @@ namespace ChatBox.Client.Forms
             string content = GetJsonField(packet.Data, "Content");
             string senderName = GetUserName(packet.SenderId);
 
-            AppendChat($"[Nhóm] {senderName}", content, Color.FromArgb(255, 180, 100));
+            AppendChat($"[Group] {senderName}", content, Color.FromArgb(255, 180, 100));
             PlayNotificationSound();
 
-            // Lưu vào lịch sử group
+            // Save to group history
             _historyService.SaveMessage("__group__", packet.SenderId, senderName, content, false);
         }
 
@@ -409,7 +412,7 @@ namespace ChatBox.Client.Forms
             // Clear "Loading..." text
             rtbChat.Clear();
 
-            // Parse Messages array - tìm mảng JSON
+            // Parse Messages array
             int msgStart = packet.Data.IndexOf("\"Messages\":", StringComparison.Ordinal);
             if (msgStart < 0) return;
             msgStart += "\"Messages\":".Length;
@@ -417,11 +420,11 @@ namespace ChatBox.Client.Forms
             string messagesJson = packet.Data.Substring(msgStart).TrimEnd('}');
             if (messagesJson == "[]") 
             {
-                AppendSystem("Chưa có tin nhắn nào");
+                AppendSystem("No message history");
                 return;
             }
 
-            // Parse từng message object
+            // Parse each message object
             bool isGroup = partnerId == "__group__";
             int i = 0;
             while (i < messagesJson.Length)
@@ -440,14 +443,14 @@ namespace ChatBox.Client.Forms
                 bool isMine = senderId == _currentUserId;
                 var color = isMine ? Color.LimeGreen : (isGroup ? Color.FromArgb(255, 180, 100) : Color.FromArgb(100, 200, 255));
                 var name = isMine ? _currentDisplayName : senderName2;
-                if (isGroup && !isMine) name = $"[Nhóm] {name}";
+                if (isGroup && !isMine) name = $"[Group] {name}";
 
                 AppendChat(name, content2, color);
                 i = objEnd + 1;
             }
         }
 
-        /// <summary>Tìm dấu } đóng tương ứng, bỏ qua {} con bên trong string</summary>
+        /// <summary>Find matching closing brace, skipping internal nested structures</summary>
         private int FindMatchingBrace(string s, int openPos)
         {
             int depth = 0;
@@ -476,13 +479,12 @@ namespace ChatBox.Client.Forms
 
             string callerName = GetUserName(callerUserId);
             var result = MessageBox.Show(
-                $"📹 {callerName} đang gọi video cho bạn.\nBạn có muốn trả lời?",
-                "Cuộc gọi đến", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                $"📹 {callerName} is calling you with video.\nDo you want to accept?",
+                "Incoming Video Call", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
                 _videoCallService.AcceptCall(callerUserId);
-                // AcceptCall sẽ trigger OnCallAccepted → mở frmVideoCall
             }
             else
             {
@@ -499,7 +501,7 @@ namespace ChatBox.Client.Forms
             }
 
             string partnerName = GetUserName(_videoCallService.CurrentCallPartner);
-            AppendSystem($"📹 Đang gọi video với {partnerName}");
+            AppendSystem($"📹 Video call connected with {partnerName}");
             OpenVideoCallForm(partnerName);
         }
 
@@ -523,7 +525,7 @@ namespace ChatBox.Client.Forms
                 return;
             }
 
-            AppendSystem("📹 Cuộc gọi video đã kết thúc");
+            AppendSystem("📹 Video call ended");
             CloseVideoCallForm();
         }
 
@@ -535,15 +537,15 @@ namespace ChatBox.Client.Forms
                 return;
             }
 
-            // Kết thúc video call nếu đang gọi
+            // End active call if any
             if (_videoCallService.IsInCall)
             {
                 _videoCallService.EndCall();
                 CloseVideoCallForm();
             }
 
-            AppendSystem("⚠️ Mất kết nối đến server!");
-            MessageBox.Show("Mất kết nối đến server!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            AppendSystem("⚠️ Connection to server lost!");
+            MessageBox.Show("Connection to server lost!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         #endregion
@@ -559,29 +561,29 @@ namespace ChatBox.Client.Forms
             {
              if (idx == lstUsers.SelectedIndex)
                 {
-                    // Thoát group chat mode khi chọn user cụ thể
+                    // Exit group chat mode when selecting a specific user
                     if (_isGroupChatMode)
                     {
                         _isGroupChatMode = false;
                         btnGroupChat.BackColor = Color.FromArgb(60, 100, 160);
-                        btnGroupChat.Text = "📢 Chat nhóm";
+                        btnGroupChat.Text = "📢 Group Chat";
                     }
 
                     _selectedUserId = kvp.Key;
                     _selectedUserName = kvp.Value;
-                    lblChatWith.Text = $"💬 Chat với {kvp.Value}";
+                    lblChatWith.Text = $"💬 Chat with {kvp.Value}";
 
                     // Clear unread
                     _unreadCounts.Remove(kvp.Key);
                     RefreshUserListBadges();
 
-                    // Load lịch sử chat từ server
+                    // Load chat history from server
                     rtbChat.Clear();
                     AppendSystem("Loading...");
                     var histReq = new Packet(PacketType.ChatHistoryRequest, _currentUserId, _selectedUserId, null);
                     _tcpService.SendPacket(histReq);
 
-                    // Khởi tạo DH key exchange nếu chưa có
+                    // Initiate DH key exchange if not established yet
                     if (!_chatService.HasSharedKey(_selectedUserId))
                     {
                         InitiateKeyExchange(_selectedUserId);
@@ -607,7 +609,7 @@ namespace ChatBox.Client.Forms
             }
             else if (!string.IsNullOrEmpty(_selectedUserId) && !_typingSendTimer.Enabled)
             {
-                // Gửi typing indicator (throttle 2s)
+                // Send typing indicator (throttle 2s)
                 _typingSendTimer.Start();
                 var typingPacket = new Packet(PacketType.TypingIndicator, _currentUserId, _selectedUserId, null);
                 _tcpService.SendPacket(typingPacket);
@@ -616,13 +618,13 @@ namespace ChatBox.Client.Forms
 
         private void btnEmoji_Click(object sender, EventArgs e)
         {
-            // Tạo popup menu emoji
+            // Create popup menu for emoji
             var menu = new ContextMenuStrip();
             menu.BackColor = Color.FromArgb(45, 45, 50);
             menu.ForeColor = Color.White;
             menu.ShowImageMargin = false;
 
-            // Hiển thị emoji 6 cái mỗi hàng
+            // Display emojis in FlowLayoutPanel
             var flowPanel = new FlowLayoutPanel
             {
                 AutoSize = true,
@@ -672,11 +674,11 @@ namespace ChatBox.Client.Forms
                 lstUsers.ClearSelected();
                 _selectedUserId = null;
                 _selectedUserName = null;
-                lblChatWith.Text = "📢 Chat nhóm (tất cả user online)";
+                lblChatWith.Text = "📢 Group Chat (All online users)";
                 btnGroupChat.BackColor = Color.FromArgb(200, 100, 50);
-                btnGroupChat.Text = "📢 Đang chat nhóm";
+                btnGroupChat.Text = "📢 In Group Chat";
 
-                // Load lịch sử group từ server
+                // Load group history from server
                 rtbChat.Clear();
                 AppendSystem("Loading...");
                 var histReq = new Packet(PacketType.ChatHistoryRequest, _currentUserId, "__group__", null);
@@ -684,9 +686,9 @@ namespace ChatBox.Client.Forms
             }
             else
             {
-                lblChatWith.Text = "Chọn user để bắt đầu chat";
+                lblChatWith.Text = "Select a user to start chat";
                 btnGroupChat.BackColor = Color.FromArgb(60, 100, 160);
-                btnGroupChat.Text = "📢 Chat nhóm";
+                btnGroupChat.Text = "📢 Group Chat";
                 rtbChat.Clear();
             }
         }
@@ -695,19 +697,19 @@ namespace ChatBox.Client.Forms
         {
             if (string.IsNullOrEmpty(_selectedUserId))
             {
-                MessageBox.Show("Vui lòng chọn user để gửi file");
+                MessageBox.Show("Please select a user to send a file to.", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             using (var ofd = new OpenFileDialog())
             {
-                ofd.Title = "Chọn file để gửi";
+                ofd.Title = "Select file to send";
                 ofd.Filter = "All Files|*.*|Images|*.jpg;*.png;*.gif;*.bmp";
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     _fileTransferService.SendFile(_selectedUserId, ofd.FileName);
                     string fileName = System.IO.Path.GetFileName(ofd.FileName);
-                    AppendSystem($"📎 Đang gửi file: {fileName}");
+                    AppendSystem($"📎 Sending file: {fileName}");
                     _historyService.SaveMessage(_selectedUserId, _currentUserId, _currentDisplayName,
                         $"[File] {fileName}", true);
                 }
@@ -718,18 +720,18 @@ namespace ChatBox.Client.Forms
         {
             if (string.IsNullOrEmpty(_selectedUserId))
             {
-                MessageBox.Show("Vui lòng chọn user để gọi video");
+                MessageBox.Show("Please select a user to start a video call.", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             if (_videoCallService.IsInCall)
             {
-                MessageBox.Show("Bạn đang trong cuộc gọi video!");
+                MessageBox.Show("You are already in a video call!", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             _videoCallService.StartCall(_selectedUserId);
-            AppendSystem($"📹 Đang gọi video cho {_selectedUserName}...");
+            AppendSystem($"📹 Calling {_selectedUserName}...");
         }
 
         private void frmChat_FormClosing(object sender, FormClosingEventArgs e)
@@ -737,14 +739,14 @@ namespace ChatBox.Client.Forms
             _tcpService.OnPacketReceived -= HandlePacket;
             _tcpService.OnDisconnected -= HandleDisconnected;
 
-            // Kết thúc video call nếu đang gọi
+            // End video call if active
             if (_videoCallService.IsInCall)
             {
                 _videoCallService.EndCall();
             }
             CloseVideoCallForm();
 
-            // Gửi disconnect packet
+            // Send disconnect packet
             var packet = new Packet(PacketType.Disconnect, _currentUserId, null, null);
             _tcpService.SendPacket(packet);
             _tcpService.Disconnect();
@@ -762,7 +764,7 @@ namespace ChatBox.Client.Forms
 
         private void OpenVideoCallForm(string partnerName)
         {
-            CloseVideoCallForm(); // Đóng form cũ nếu có
+            CloseVideoCallForm(); // Close existing form if any
 
             _activeVideoCallForm = new frmVideoCall(_videoCallService);
             _activeVideoCallForm.Text = $"📹 Video Call - {partnerName}";
@@ -795,7 +797,7 @@ namespace ChatBox.Client.Forms
 
             if (_isGroupChatMode)
             {
-                // Group chat: broadcast tới tất cả user online
+                // Group chat: broadcast to all online users
                 var data = string.Format("{{\"Content\":\"{0}\"}}", EscapeJsonString(message));
                 foreach (var kvp in _onlineUsers)
                 {
@@ -828,7 +830,7 @@ namespace ChatBox.Client.Forms
             var packet = new Packet(PacketType.KeyExchange, _currentUserId, targetUserId, publicKey);
             _tcpService.SendPacket(packet);
 
-            AppendSystem($"🔑 Đang trao đổi khoá mã hoá với {GetUserName(targetUserId)}...");
+            AppendSystem($"🔑 Performing key exchange with {GetUserName(targetUserId)}...");
         }
 
         private void AppendChat(string sender, string message, Color color)
