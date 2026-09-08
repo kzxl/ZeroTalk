@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -28,9 +29,16 @@ namespace ChatBox.Server.Services
 
         public bool IsRunning { get; private set; }
         public int ConnectedCount => _clients.Count;
+        public int TotalMessagesRouted { get; private set; }
+        public DateTime? StartTime { get; private set; }
 
         public event Action<string> OnLog;
         public event Action OnClientListChanged;
+
+        public List<ConnectedClient> GetClientsSnapshot()
+        {
+            return new List<ConnectedClient>(_clients.Values);
+        }
 
         public TcpServerService(UserStore userStore)
         {
@@ -51,6 +59,7 @@ namespace ChatBox.Server.Services
             _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
             IsRunning = true;
+            StartTime = DateTime.Now;
 
             Log($"Server đã khởi động trên port {port}");
 
@@ -161,6 +170,9 @@ namespace ChatBox.Server.Services
         /// </summary>
         private void ProcessPacket(string connectionId, ConnectedClient client, Packet packet)
         {
+            client.PacketsReceived++;
+            TotalMessagesRouted++;
+
             switch (packet.Type)
             {
                 case PacketType.Login:
@@ -221,13 +233,7 @@ namespace ChatBox.Server.Services
         /// </summary>
         private void HandleLogin(string connectionId, ConnectedClient client, Packet packet)
         {
-            // Parse LoginRequestDTO từ Data
-            var request = new LoginRequestDTO
-            {
-                Username = GetJsonField(packet.Data, "Username"),
-                PasswordHash = GetJsonField(packet.Data, "PasswordHash")
-            };
-
+            var request = PacketSerializer.FromJson<LoginRequestDTO>(packet.Data) ?? new LoginRequestDTO();
             var response = _authService.Authenticate(request);
 
             if (response.Success)
@@ -251,15 +257,10 @@ namespace ChatBox.Server.Services
             }
 
             // Gửi response về client
-            var responseData = string.Format(
-                "{{\"Success\":{0},\"Message\":\"{1}\",\"UserId\":\"{2}\",\"DisplayName\":\"{3}\"}}",
-                response.Success.ToString().ToLower(),
-                response.Message ?? "",
-                response.UserId ?? "",
-                response.DisplayName ?? "");
-
+            var responseData = PacketSerializer.ToJson(response);
             var responsePacket = new Packet(PacketType.LoginResponse, "server", connectionId, responseData);
             PacketSerializer.SendPacket(client.Stream, responsePacket);
+            client.PacketsSent++;
 
             if (response.Success)
             {
@@ -278,23 +279,13 @@ namespace ChatBox.Server.Services
         /// </summary>
         private void HandleRegister(string connectionId, ConnectedClient client, Packet packet)
         {
-            var request = new LoginRequestDTO
-            {
-                Username = GetJsonField(packet.Data, "Username"),
-                PasswordHash = GetJsonField(packet.Data, "PasswordHash")
-            };
-
+            var request = PacketSerializer.FromJson<LoginRequestDTO>(packet.Data) ?? new LoginRequestDTO();
             var response = _authService.Register(request);
-
-            var responseData = string.Format(
-                "{{\"Success\":{0},\"Message\":\"{1}\",\"UserId\":\"{2}\",\"DisplayName\":\"{3}\"}}",
-                response.Success.ToString().ToLower(),
-                response.Message ?? "",
-                response.UserId ?? "",
-                response.DisplayName ?? "");
+            var responseData = PacketSerializer.ToJson(response);
 
             var responsePacket = new Packet(PacketType.RegisterResponse, "server", connectionId, responseData);
             PacketSerializer.SendPacket(client.Stream, responsePacket);
+            client.PacketsSent++;
 
             Log($"[REGISTER] {request.Username}: {response.Message}");
         }
@@ -326,16 +317,16 @@ namespace ChatBox.Server.Services
         }
 
         /// <summary>
-        /// Ngắt kết nối client
+        /// Ngắt kết nối client (public để hỗ trợ Kick từ server UI)
         /// </summary>
-        private void DisconnectClient(string connectionId)
+        public void DisconnectClient(string connectionId)
         {
             ConnectedClient client;
             if (_clients.TryRemove(connectionId, out client))
             {
                 try { client.TcpClient?.Close(); } catch { }
 
-                Log($"[DISCONNECT] {client.Username ?? connectionId} đã ngắt kết nối");
+                Log($"[DISCONNECT] {client.DisplayName ?? client.Username ?? connectionId} đã ngắt kết nối");
 
                 if (client.IsAuthenticated)
                 {
@@ -351,20 +342,6 @@ namespace ChatBox.Server.Services
             OnLog?.Invoke($"[{DateTime.Now:HH:mm:ss}] {message}");
         }
 
-        /// <summary>Simple helper lấy field từ JSON string</summary>
-        private string GetJsonField(string json, string field)
-        {
-            if (string.IsNullOrEmpty(json)) return null;
-
-            var search = "\"" + field + "\":\"";
-            int idx = json.IndexOf(search, StringComparison.Ordinal);
-            if (idx < 0) return null;
-
-            idx += search.Length;
-            int end = json.IndexOf('"', idx);
-            return end < 0 ? null : json.Substring(idx, end - idx);
-        }
-
         /// <summary>
         /// Lưu tin nhắn vào MessageStore (chỉ Message và GroupMessage)
         /// </summary>
@@ -372,7 +349,8 @@ namespace ChatBox.Server.Services
         {
             if (packet.Type == PacketType.Message || packet.Type == PacketType.GroupMessage)
             {
-                string content = GetJsonField(packet.Data, "Content");
+                var msg = PacketSerializer.FromJson<MessageDTO>(packet.Data);
+                string content = msg?.Content;
                 if (string.IsNullOrEmpty(content)) return;
 
                 string receiverId = packet.Type == PacketType.GroupMessage ? "__group__" : packet.ReceiverId;
@@ -382,7 +360,6 @@ namespace ChatBox.Server.Services
 
         /// <summary>
         /// Client yêu cầu lịch sử chat → server trả về ChatHistoryResponse
-        /// Data format: ReceiverId = partner/group, Data = max count (optional)
         /// </summary>
         private void HandleChatHistoryRequest(string connectionId, ConnectedClient client, Packet packet)
         {
@@ -392,12 +369,15 @@ namespace ChatBox.Server.Services
             int maxCount = 50;
 
             var history = _messageStore.GetHistory(client.UserId, partnerId, maxCount);
-            string json = _messageStore.SerializeHistory(history);
+            var historyPayload = new System.Collections.Generic.Dictionary<string, object>
+            {
+                { "PartnerId", partnerId },
+                { "Messages", history }
+            };
 
-            var response = new Packet(PacketType.ChatHistoryResponse, "SERVER", client.UserId, 
-                string.Format("{{\"PartnerId\":\"{0}\",\"Messages\":{1}}}", partnerId, json));
-
+            var response = new Packet(PacketType.ChatHistoryResponse, "SERVER", client.UserId, PacketSerializer.ToJson(historyPayload));
             PacketSerializer.SendPacket(client.Stream, response);
+            client.PacketsSent++;
             Log($"Gửi {history.Count} tin nhắn lịch sử cho {client.DisplayName} (partner: {partnerId})");
         }
     }

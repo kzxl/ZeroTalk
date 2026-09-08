@@ -1,3 +1,4 @@
+using System;
 using System.Net.Sockets;
 
 namespace ChatBox.Server.Models
@@ -24,6 +25,15 @@ namespace ChatBox.Server.Models
 
         /// <summary>Đã xác thực chưa</summary>
         public bool IsAuthenticated { get; set; }
+
+        /// <summary>Thời gian kết nối</summary>
+        public DateTime ConnectedAt { get; set; } = DateTime.Now;
+
+        /// <summary>Số packet nhận được</summary>
+        public int PacketsReceived { get; set; }
+
+        /// <summary>Số packet đã gửi</summary>
+        public int PacketsSent { get; set; }
 
         /// <summary>Endpoint address (IP:Port) để log</summary>
         public string EndPoint

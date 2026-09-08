@@ -19,6 +19,18 @@ namespace ChatBox.Server.Services
         /// <summary>Số client đang kết nối</summary>
         int ConnectedCount { get; }
 
+        /// <summary>Tổng số tin nhắn/packet đã route</summary>
+        int TotalMessagesRouted { get; }
+
+        /// <summary>Thời gian server khởi động</summary>
+        DateTime? StartTime { get; }
+
+        /// <summary>Lấy danh sách snapshot các client đang kết nối</summary>
+        System.Collections.Generic.List<ChatBox.Server.Models.ConnectedClient> GetClientsSnapshot();
+
+        /// <summary>Ngắt kết nối/kick một client</summary>
+        void DisconnectClient(string userId);
+
         /// <summary>Event log message</summary>
         event Action<string> OnLog;
 
