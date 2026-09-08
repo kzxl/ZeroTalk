@@ -104,42 +104,39 @@ namespace ChatBox.Server.Data
                 }
             }
 
-            // Seed default demo accounts if store is empty
-            if (_users.Count == 0)
-            {
-                SeedDemoUsers();
-                SaveUsers();
-            }
+            // Ensure default demo accounts (alice, bob, charlie) always exist with password "123"
+            EnsureDemoUsers();
+            SaveUsers();
         }
 
-        private void SeedDemoUsers()
+        private void EnsureDemoUsers()
         {
-            _users.Add(new UserAccount
-            {
-                UserId = "user_alice",
-                Username = "alice",
-                PasswordHash = HashPassword("123"),
-                DisplayName = "Alice Johnson",
-                CreatedAt = DateTime.Now
-            });
+            EnsureUser("user_alice", "alice", "123", "Alice Johnson");
+            EnsureUser("user_bob", "bob", "123", "Bob Williams");
+            EnsureUser("user_charlie", "charlie", "123", "Charlie Davis");
+        }
 
-            _users.Add(new UserAccount
+        private void EnsureUser(string id, string username, string password, string displayName)
+        {
+            var user = _users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+            if (user == null)
             {
-                UserId = "user_bob",
-                Username = "bob",
-                PasswordHash = HashPassword("123"),
-                DisplayName = "Bob Williams",
-                CreatedAt = DateTime.Now
-            });
-
-            _users.Add(new UserAccount
+                _users.Add(new UserAccount
+                {
+                    UserId = id,
+                    Username = username,
+                    PasswordHash = HashPassword(password),
+                    DisplayName = displayName,
+                    CreatedAt = DateTime.Now
+                });
+            }
+            else
             {
-                UserId = "user_charlie",
-                Username = "charlie",
-                PasswordHash = HashPassword("123"),
-                DisplayName = "Charlie Davis",
-                CreatedAt = DateTime.Now
-            });
+                // Guarantee demo password is always valid
+                user.PasswordHash = HashPassword(password);
+                if (string.IsNullOrEmpty(user.DisplayName))
+                    user.DisplayName = displayName;
+            }
         }
 
         private void SaveUsers()
