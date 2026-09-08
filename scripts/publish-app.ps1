@@ -1,6 +1,7 @@
 param (
     [ValidateSet("Full", "Lite")]
     [string]$Mode = "Full",
+    [string]$Version = "1.1.0",
     [string]$OutputDir = "$PSScriptRoot\..\publish"
 )
 
@@ -55,7 +56,7 @@ Get-ChildItem "$RootDir\ChatBox.Client\bin\$config" -File | ForEach-Object {
     Copy-Item $_.FullName -Destination $clientOut
 }
 
-$zipFile = Join-Path $OutputDir "SimpleChatBox-v1.0.0-$Mode.zip"
+$zipFile = Join-Path $OutputDir "SimpleChatBox-v$Version-$Mode.zip"
 if (Test-Path $zipFile) {
     Remove-Item $zipFile -Force
 }

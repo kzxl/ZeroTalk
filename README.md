@@ -198,7 +198,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Full
 powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Lite
 ```
 
-Generated outputs are placed in `publish/Full` and `publish/Lite`, along with redistributable zip archives `SimpleChatBox-v1.0.0-Full.zip` and `SimpleChatBox-v1.0.0-Lite.zip`.
+Generated outputs are placed in `publish/Full` and `publish/Lite`, along with redistributable zip archives `SimpleChatBox-v1.1.0-Full.zip` and `SimpleChatBox-v1.1.0-Lite.zip`.
 
 ---
 
