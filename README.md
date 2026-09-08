@@ -1,152 +1,182 @@
-# 💬 SimpleChatBox
+# SimpleChatBox
 
-Ứng dụng Chat thời gian thực với **Server - Multi Client** trên nền Windows Forms C# (.NET Framework 4.8).  
-Hỗ trợ **P2P Video Call** qua internet với STUN NAT traversal.
+[![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/)
+[![Dependencies](https://img.shields.io/badge/NuGet-Zero%20Dependencies-brightgreen.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-Windows%20Forms-blueviolet.svg)]()
+[![Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20P2P%20%2B%20Relay-orange.svg)]()
 
-## ✨ Tính năng
+**SimpleChatBox** is a high-performance, enterprise-grade real-time chat and multimedia communication platform built on C# Windows Forms and .NET Framework 4.8. It operates with **zero external NuGet package dependencies**, relying solely on native .NET Base Class Libraries (BCL).
 
-### 💬 Chat
-- **Chat 1-1** — Nhắn tin trực tiếp giữa 2 user, mã hoá End-to-End
-- **Chat nhóm** — Broadcast tin nhắn cho tất cả user online
-- **Emoji picker** — 24 emoji phổ biến, bấm 😀 để chọn
-- **Typing indicator** — Hiển thị "đang nhập..." khi đối phương gõ
-- **Lịch sử chat** — Lưu trên **server**, tự động load khi chọn user
-- **Unread badges** — Đếm tin nhắn chưa đọc cạnh tên user
-- **Sound notification** — Âm thanh khi nhận tin nhắn mới
+The application demonstrates real-world software engineering best practices, including length-prefixed TCP binary framing, ECDH key negotiation, AES-256 end-to-end encryption, STUN NAT traversal with UDP hole punching, server relay fallback, pluggable synthetic video capture, desktop screen sharing, real-time server telemetry HUD, and an automated regression test suite.
 
-### 📎 File Transfer
-- **Gửi file** — Chunk-based, hỗ trợ mọi loại file
-- **Nhận file** — Tự động lưu vào `Downloads/`, hỏi mở sau khi nhận
+---
 
-### 📹 Video Call (P2P)
-- **STUN NAT traversal** — Hoạt động qua internet
-- **UDP Hole Punching** — Kết nối P2P trực tiếp
-- **Fallback relay** — Tự chuyển qua server nếu P2P thất bại
-- **Popup cửa sổ** — frmVideoCall hiện khi gọi/nhận
+## 🌟 Key Capabilities
 
-### 🔐 Bảo mật
-- **Đăng ký / Đăng nhập** — SHA256 password hash
-- **Diffie-Hellman** — ECDH key exchange
-- **AES-256-CBC** — Mã hoá tin nhắn End-to-End
+### 1. Pluggable Video Streaming Pipeline (P2P & Relay)
+- **Zero Webcam Hardware Required**: Features an embedded high-performance **Synthetic Camera** (`SyntheticVideoSource`) that generates animated radar sweeps, live milliseconds clocks, randomized audio frequency bars, and user avatar identifiers at 15–20 FPS.
+- **Desktop Screen Sharing**: Features `ScreenCaptureVideoSource` to stream active desktop displays in real-time.
+- **Picture-in-Picture (PIP) & Camera Toggle**: Local preview window rendered simultaneously with remote incoming streams with memory-safe GDI bitmap recycling.
+- **STUN NAT Traversal (RFC 5389)**: Discovers public IP endpoints and performs UDP hole punching for direct P2P streaming.
+- **Automatic Server Relay Fallback**: Automatically falls back to TCP server relay if UDP hole punching is blocked by symmetric NATs.
 
-### ⚡ Hệ thống
-- **Online/Offline detection** — Tự động cập nhật danh sách user
-- **Disconnect handling** — Tự kết thúc video call khi đối phương offline
-- **Heartbeat** — Đảm bảo user list luôn đồng bộ
+### 2. End-to-End Cryptography & Security
+- **ECDH Key Exchange**: Implements Diffie-Hellman Elliptic Curve Key Exchange (`DiffieHellmanHelper`) for per-session shared secret negotiation.
+- **AES-256-CBC Encryption**: End-to-end encrypted messaging with dynamically generated initialization vectors (IVs).
+- **Secure Authentication**: SHA-256 hashed password storage (`UserStore`) with pre-seeded demo credentials.
 
-## 🏗️ Kiến trúc
+### 3. Server Management & Real-Time Telemetry Dashboard
+- **Live Client Directory**: `ListView` displaying client IDs, usernames, display names, IP endpoints, connection timestamps, and packet telemetry.
+- **Administrative Controls**: Right-click context menu to disconnect/kick connected clients.
+- **Real-Time HUD**: Live uptime clock, total routed message counters, and host IP address display for LAN discovery.
+- **One-Click Multi-Client Launch**: Button to automatically spin up 2 demo client instances (`alice` and `bob`).
+
+### 4. Client UX & Quick Demo Workflow
+- **1-Click Demo Login**: Quick-access buttons for pre-seeded users (`👤 Alice`, `👤 Bob`, `👤 Charlie`).
+- **CLI Automation**: Supports command-line auto-login arguments (e.g., `ChatBox.Client.exe demo_alice`).
+- **File Transfer Progress**: Real-time chunk transmission progress (`cur/total chunks` and percentage).
+- **Dedicated Image Previewer**: Automatic modal dialog (`frmImagePreview`) for viewing received `.jpg`, `.png`, `.gif`, and `.bmp` files with dimensions, file size, and explorer shortcuts.
+- **Group & Direct Messaging**: Support for private 1-to-1 conversations and broadcast rooms.
+
+### 5. Automated Regression Test Suite (`ChatBox.Tests`)
+- Custom lightweight test runner with zero third-party dependencies verifying:
+  1. Packet serialization, length-prefixed framing, special characters, and Unicode text.
+  2. AES-256 encryption/decryption roundtrips and ECDH shared key equivalence.
+  3. User authentication, password hashing, and message history persistence.
+  4. Video generator frame capture and JPEG SOI header validity.
+
+---
+
+## 🏛️ System Architecture
 
 ```
 ChatBoxSimple.sln
-├── ChatBox.Shared        # Class Library — DTO, Protocol, Crypto, Network
-│   ├── Constants/        # AppConstants (ports, buffer sizes)
-│   ├── DTOs/             # Login, Message, FileTransfer, VideoSignal
-│   ├── Protocol/         # PacketType, Packet, PacketSerializer
-│   ├── Crypto/           # AesHelper (AES-256-CBC), DiffieHellmanHelper (ECDH)
-│   └── Network/          # StunClient (RFC 5389 NAT traversal)
 │
-├── ChatBox.Server        # WinForms App — TCP Server
-│   ├── Data/             # UserStore (accounts), MessageStore (chat history)
-│   ├── Models/           # UserAccount, ConnectedClient
-│   ├── Services/         # AuthService, TcpServerService, MessageRouter
-│   └── Forms/            # frmServer (dashboard)
+├── ChatBox.Shared/               # Core BCL Library (Shared across Server & Client)
+│   ├── Constants/AppConstants.cs # Protocol ports, buffer limits, chunk sizes
+│   ├── Crypto/                   # AES-256-CBC & Diffie-Hellman (ECDH) helpers
+│   ├── DTOs/                     # Network data transfer contracts
+│   ├── Network/StunClient.cs     # RFC 5389 STUN NAT traversal engine
+│   └── Protocol/                 # Packet framing, types, and JSON serialization
 │
-└── ChatBox.Client        # WinForms App — TCP Client
-    ├── Services/         # TcpClient, Chat, FileTransfer, FileReceive,
-    │                     # VideoCall, UdpPeer, MessageHistory
-    ├── Helpers/          # VideoRecorder
-    └── Forms/            # frmLogin, frmChat, frmVideoCall
+├── ChatBox.Server/               # WinForms Server Management Host
+│   ├── Data/                     # UserStore (JSON) & MessageStore (JSON history)
+│   ├── Models/                   # ConnectedClient & UserAccount
+│   ├── Services/                 # TcpServerService, AuthService, MessageRouter
+│   └── Forms/frmServer.cs        # Telemetry HUD, Client list, and 1-click launcher
+│
+├── ChatBox.Client/               # WinForms End-User Client
+│   ├── Forms/                    # frmLogin, frmChat, frmVideoCall, frmImagePreview
+│   ├── Helpers/VideoRecorder.cs  # Video call recording hooks
+│   └── Services/                 # Pluggable IVideoSource, VideoCallService,
+│                                 # FileTransferService, FileReceiveService, UdpPeerService
+│
+└── ChatBox.Tests/                # Standalone Automated Test Runner (.NET 4.8)
+    ├── Program.cs                # Test harness entry point (exit code 0/1)
+    ├── ProtocolTests.cs          # Serialization and packet integrity tests
+    ├── CryptoTests.cs            # Cryptographic roundtrip tests
+    ├── StorageTests.cs           # Database and persistence tests
+    └── VideoSourceTests.cs       # Video frame generation and compression tests
 ```
 
-## 📹 P2P Video Call Flow
+---
+
+## 📹 Video Call Flow Diagram
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Client A          Server          Client B         │
-│     │                │                │              │
-│     ├──STUN──→ Google STUN Server                   │
-│     │    (discover public IP:Port)                   │
-│     │                                               │
-│     ├──Request──→│──Forward──→│                      │
-│     │            │     ←──Accept──┤                  │
-│     │   ←──Forward──┤                │              │
-│     │                                               │
-│     ├═══════ UDP Hole Punching ═══════┤             │
-│     │                                               │
-│     │  ✅ Success → P2P UDP Streaming                │
-│     │  ❌ Fail    → Fallback TCP Relay               │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  Client A                  Server               Client B │
+│      │                        │                    │     │
+│      ├──STUN Discovery───────→│                    │     │
+│      │  (Public IP/Port)      │                    │     │
+│      │                        │                    │     │
+│      ├──VideoCallRequest─────→│───Forward Signal──→│     │
+│      │                        │     ←──Accept──────┤     │
+│      │   ←──Forward Signal────┤                    │     │
+│      │                                             │     │
+│      ├════════════ UDP Hole Punching ══════════════┤     │
+│      │                                             │     │
+│      │  [Success] → Direct P2P UDP Streaming       │     │
+│      │  [Failure] → Fallback TCP Server Relay      │     │
+│      │                                             │     │
+│      └──Display Local PIP (Synthetic/Screen Share)─┘     │
+└──────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Hướng dẫn sử dụng
+---
 
-### Yêu cầu
-- Windows 10+
-- .NET Framework 4.8
-- Visual Studio 2022 (hoặc MSBuild)
+## 👥 Default Demo Accounts
 
-### Build
+All demo accounts are pre-seeded in `UserStore` with password `123`:
+
+| Username | Password | Display Name | Role |
+| :--- | :--- | :--- | :--- |
+| `alice` | `123` | Alice Johnson | Demo User A |
+| `bob` | `123` | Bob Williams | Demo User B |
+| `charlie` | `123` | Charlie Davis | Demo User C |
+
+---
+
+## 🚀 Quick Start Guide
+
+### Prerequisites
+- **Operating System**: Windows 10 / 11 / Windows Server 2016+
+- **Runtime**: .NET Framework 4.8 runtime (built into modern Windows)
+- **Build Tools**: .NET SDK (`dotnet build`) or Visual Studio 2022 / MSBuild
+
+### Automated 1-Command Demo Launcher
+Run the PowerShell orchestrator script from the repository root:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run-demo.ps1
+```
+This script automatically:
+1. Compiles the solution in `Debug` configuration.
+2. Executes the regression test suite (`ChatBox.Tests.exe`).
+3. Starts the Server Dashboard and binds to port `9000`.
+4. Spawns two pre-configured demo clients (`Alice` and `Bob`) with automatic login.
+
+---
+
+### Manual Execution Steps
+
+#### 1. Compile the Solution
 ```bash
-MSBuild.exe ChatBoxSimple.sln /p:Configuration=Debug
-# Hoặc: Visual Studio → Build Solution (Ctrl+Shift+B)
+dotnet build ChatBoxSimple.sln -c Debug
 ```
 
-### Bước 1: Khởi động Server
-1. Chạy `ChatBox.Server/bin/Debug/ChatBox.Server.exe`
-2. Chọn port (mặc định: **9000**)
-3. Bấm **▶ Khởi động**
-4. Server sẵn sàng, hiển thị log kết nối
+#### 2. Run the Test Suite
+```bash
+.\ChatBox.Tests\bin\Debug\ChatBox.Tests.exe
+```
 
-### Bước 2: Khởi động Client
-1. Chạy `ChatBox.Client/bin/Debug/ChatBox.Client.exe` (có thể chạy **nhiều instance**)
-2. Nhập **Server**: `127.0.0.1` (LAN) hoặc IP public (internet)
-3. Nhập **Port**: `9000`
-4. **Đăng ký** tài khoản mới hoặc **Đăng nhập** tài khoản có sẵn
+#### 3. Start the Server
+```bash
+.\ChatBox.Server\bin\Debug\ChatBox.Server.exe
+```
+- Click **▶ Khởi động** to open port 9000.
+- Click **⚡ Mở 2 Client Demo** to launch both Alice and Bob simultaneously.
 
-### Bước 3: Sử dụng
-| Tính năng | Cách dùng |
-|-----------|-----------|
-| **Chat 1-1** | Chọn user trong danh sách → Gõ tin nhắn → Enter hoặc "Gửi ➤" |
-| **Chat nhóm** | Bấm "📢 Chat nhóm" → Gõ tin nhắn (gửi cho tất cả) |
-| **Emoji** | Bấm 😀 trên thanh chat → Chọn emoji |
-| **Gửi file** | Bấm 📎 → Chọn file → File tự động gửi |
-| **Video call** | Chọn user → Bấm 📹 → Đợi đối phương chấp nhận |
-| **Lịch sử** | Chọn user → Lịch sử tự động load từ server |
+#### 4. Start the Clients
+```bash
+.\ChatBox.Client\bin\Debug\ChatBox.Client.exe demo_alice
+.\ChatBox.Client\bin\Debug\ChatBox.Client.exe demo_bob
+```
 
-### Chạy qua Internet
-1. Server: **mở port 9000** trên router (port forwarding)
-2. Client: nhập **IP public** của server khi đăng nhập
-3. Video call tự động dùng **STUN** để kết nối P2P qua NAT
+---
 
-## 📁 Dữ liệu Server
+## 📦 Build & Packaging (`scripts/publish-app.ps1`)
 
-| File/Folder | Mô tả |
-|-------------|-------|
-| `users.json` | Danh sách tài khoản đã đăng ký |
-| `ChatData/` | Lịch sử chat (JSON per conversation, max 500 tin/conversation) |
+In adherence with enterprise deployment standards, the project supports both distribution modes:
 
-## 📁 Dữ liệu Client
+```powershell
+# Full release package:
+powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Full
 
-| File/Folder | Mô tả |
-|-------------|-------|
-| `Downloads/` | File nhận được từ người khác |
-| `Recordings/` | Video ghi hình cuộc gọi |
+# Lite release package (binaries only, excludes .pdb symbols):
+powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Lite
+```
 
-## 🛠️ Công nghệ
-
-- **Framework**: .NET Framework 4.8
-- **UI**: Windows Forms (dark theme)
-- **Network**: `System.Net.Sockets` (TCP + UDP)
-- **NAT Traversal**: STUN (RFC 5389) + UDP Hole Punching
-- **Crypto**: `System.Security.Cryptography` (AES, ECDH, SHA256)
-- **Pattern**: Interface-first Services, DTO-based communication
-
-## 📋 Roadmap
-
-- [ ] Tích hợp AForge.Video.DirectShow cho camera capture
-- [ ] NAudio cho audio capture
-- [ ] UI themes (light/dark switch)
+---
 
 ## 📄 License
-
-MIT — Xem file [LICENSE](LICENSE)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -17,9 +17,9 @@ namespace ChatBox.Server.Data
         private readonly string _dataDir;
         private readonly object _lock = new object();
 
-        public MessageStore()
+        public MessageStore(string dataDir = null)
         {
-            _dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ChatData");
+            _dataDir = dataDir ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ChatData");
             if (!Directory.Exists(_dataDir))
                 Directory.CreateDirectory(_dataDir);
         }

@@ -11,3 +11,7 @@ packages/
 # Runtime data
 users.json
 ChatHistory/
+ChatData/
+Downloads/
+Recordings/
+publish/
