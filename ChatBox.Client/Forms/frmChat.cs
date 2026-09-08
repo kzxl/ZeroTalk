@@ -63,6 +63,22 @@ namespace ChatBox.Client.Forms
             _videoCallService = new VideoCallService(tcpService, _chatService);
             _historyService = new MessageHistoryService();
 
+            // Lắng nghe tiến trình truyền file
+            _fileTransferService.OnSendProgress += (fileName, current, total) =>
+            {
+                if (current == total || current % 5 == 0)
+                {
+                    AppendSystem($"📤 Đang gửi \"{fileName}\": {current}/{total} chunks ({(current * 100 / total)}%)");
+                }
+            };
+            _fileReceiveService.OnReceiveProgress += (transferId, current, total) =>
+            {
+                if (current == total || current % 5 == 0)
+                {
+                    AppendSystem($"📥 Đang nhận file: {current}/{total} chunks ({(current * 100 / total)}%)");
+                }
+            };
+
             lblCurrentUser.Text = $"💬 ChatBox - Đăng nhập: {displayName}";
             this.Text = $"ChatBox - {displayName}";
 
@@ -327,14 +343,32 @@ namespace ChatBox.Client.Forms
 
                 AppendSystem($"✅ Đã nhận file từ {senderName}: {fileName}");
 
-                // Hỏi user có muốn mở file không
-                var result = MessageBox.Show(
-                    $"Đã nhận file \"{fileName}\" từ {senderName}.\n\nBạn có muốn mở file?",
-                    "File đã nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                string ext = System.IO.Path.GetExtension(savedPath).ToLower();
+                bool isImage = ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".bmp";
 
-                if (result == DialogResult.Yes)
+                if (isImage)
                 {
-                    FileReceiveService.OpenFile(savedPath);
+                    try
+                    {
+                        var preview = new frmImagePreview(savedPath);
+                        preview.Show(this);
+                    }
+                    catch
+                    {
+                        FileReceiveService.OpenFile(savedPath);
+                    }
+                }
+                else
+                {
+                    // Hỏi user có muốn mở file không
+                    var result = MessageBox.Show(
+                        $"Đã nhận file \"{fileName}\" từ {senderName}.\n\nBạn có muốn mở file?",
+                        "File đã nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        FileReceiveService.OpenFile(savedPath);
+                    }
                 }
 
                 // Lưu lịch sử

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,20 +10,36 @@ using ChatBox.Shared.Protocol;
 namespace ChatBox.Client.Forms
 {
     /// <summary>
-    /// Form đăng nhập / đăng ký
+    /// Form đăng nhập / đăng ký, hỗ trợ đăng nhập 1-click cho tài khoản Demo.
     /// </summary>
     public partial class frmLogin : Form
     {
         private TcpClientService _tcpService;
+        private readonly string _autoLoginUser;
 
         public string LoggedInUserId { get; private set; }
         public string LoggedInDisplayName { get; private set; }
         public TcpClientService TcpService => _tcpService;
 
-        public frmLogin()
+        public frmLogin(string autoLoginUser = null)
         {
             InitializeComponent();
+            _autoLoginUser = autoLoginUser;
             _tcpService = new TcpClientService();
+        }
+
+        protected override async void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
+            if (!string.IsNullOrEmpty(_autoLoginUser))
+            {
+                string username = _autoLoginUser.Replace("demo_", "").Trim().ToLower();
+                txtUsername.Text = username;
+                txtPassword.Text = "123";
+                await Task.Delay(300); // Đợi form hiển thị ổn định
+                await DoAuth(PacketType.Login);
+            }
         }
 
         private async void btnLogin_Click(object sender, EventArgs e)
@@ -33,6 +50,27 @@ namespace ChatBox.Client.Forms
         private async void btnRegister_Click(object sender, EventArgs e)
         {
             await DoAuth(PacketType.Register);
+        }
+
+        private async void btnDemoAlice_Click(object sender, EventArgs e)
+        {
+            txtUsername.Text = "alice";
+            txtPassword.Text = "123";
+            await DoAuth(PacketType.Login);
+        }
+
+        private async void btnDemoBob_Click(object sender, EventArgs e)
+        {
+            txtUsername.Text = "bob";
+            txtPassword.Text = "123";
+            await DoAuth(PacketType.Login);
+        }
+
+        private async void btnDemoCharlie_Click(object sender, EventArgs e)
+        {
+            txtUsername.Text = "charlie";
+            txtPassword.Text = "123";
+            await DoAuth(PacketType.Login);
         }
 
         private async Task DoAuth(PacketType authType)
@@ -46,6 +84,7 @@ namespace ChatBox.Client.Forms
 
             btnLogin.Enabled = false;
             btnRegister.Enabled = false;
+            pnlDemo.Enabled = false;
             lblStatus.Text = "Đang kết nối...";
             lblStatus.ForeColor = System.Drawing.Color.Gray;
 
@@ -72,10 +111,13 @@ namespace ChatBox.Client.Forms
                 }
 
                 // 3. Gửi packet Login/Register
-                var data = string.Format(
-                    "{{\"Username\":\"{0}\",\"PasswordHash\":\"{1}\"}}",
-                    txtUsername.Text, passwordHash);
+                var authPayload = new Dictionary<string, object>
+                {
+                    { "Username", txtUsername.Text.Trim() },
+                    { "PasswordHash", passwordHash }
+                };
 
+                var data = PacketSerializer.ToJson(authPayload);
                 var packet = new Packet(authType, null, null, data);
 
                 // Subscribe nhận response 1 lần
@@ -109,10 +151,23 @@ namespace ChatBox.Client.Forms
                 var response = tcs.Task.Result;
 
                 // 5. Parse response
-                var success = GetJsonField(response.Data, "Success") == "true";
-                var message = GetJsonField(response.Data, "Message");
-                var userId = GetJsonField(response.Data, "UserId");
-                var displayName = GetJsonField(response.Data, "DisplayName");
+                var respData = PacketSerializer.FromJson<Dictionary<string, object>>(response.Data);
+                bool success = false;
+                string message = null;
+                string userId = null;
+                string displayName = null;
+
+                if (respData != null)
+                {
+                    if (respData.ContainsKey("Success") && respData["Success"] != null)
+                        bool.TryParse(respData["Success"].ToString(), out success);
+                    if (respData.ContainsKey("Message") && respData["Message"] != null)
+                        message = respData["Message"].ToString();
+                    if (respData.ContainsKey("UserId") && respData["UserId"] != null)
+                        userId = respData["UserId"].ToString();
+                    if (respData.ContainsKey("DisplayName") && respData["DisplayName"] != null)
+                        displayName = respData["DisplayName"].ToString();
+                }
 
                 if (success)
                 {
@@ -136,39 +191,7 @@ namespace ChatBox.Client.Forms
             {
                 btnLogin.Enabled = true;
                 btnRegister.Enabled = true;
-            }
-        }
-
-        private string GetJsonField(string json, string field)
-        {
-            if (string.IsNullOrEmpty(json)) return null;
-
-            // Handle boolean fields
-            var searchBool = "\"" + field + "\":";
-            int idx = json.IndexOf(searchBool, StringComparison.Ordinal);
-            if (idx < 0) return null;
-
-            idx += searchBool.Length;
-            while (idx < json.Length && json[idx] == ' ') idx++;
-
-            if (idx >= json.Length) return null;
-
-            if (json[idx] == '"')
-            {
-                idx++;
-                int end = json.IndexOf('"', idx);
-                return end < 0 ? null : json.Substring(idx, end - idx);
-            }
-            else
-            {
-                // Boolean or number
-                var sb = new StringBuilder();
-                while (idx < json.Length && json[idx] != ',' && json[idx] != '}')
-                {
-                    sb.Append(json[idx]);
-                    idx++;
-                }
-                return sb.ToString().Trim();
+                pnlDemo.Enabled = true;
             }
         }
     }
