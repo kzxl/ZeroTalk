@@ -3,22 +3,36 @@
 [![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/)
 [![Dependencies](https://img.shields.io/badge/NuGet-Zero%20Dependencies-brightgreen.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-Windows%20Forms-blueviolet.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-8%2F8%20Passing-brightgreen.svg)]()
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20P2P%20%2B%20Relay-orange.svg)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 **SimpleChatBox** is a high-performance, enterprise-grade real-time chat and multimedia communication platform built on C# Windows Forms and .NET Framework 4.8. It operates with **zero external NuGet package dependencies**, relying solely on native .NET Base Class Libraries (BCL).
 
-The application demonstrates real-world software engineering best practices, including length-prefixed TCP binary framing, ECDH key negotiation, AES-256 end-to-end encryption, STUN NAT traversal with UDP hole punching, server relay fallback, pluggable synthetic video capture, desktop screen sharing, real-time server telemetry HUD, and an automated regression test suite.
+The platform showcases robust software engineering patterns: length-prefixed TCP binary framing, ECDH shared secret negotiation, AES-256-CBC end-to-end encryption, STUN NAT traversal with UDP hole punching, server relay fallback, pluggable synthetic camera video capture, desktop screen sharing, a live telemetry server dashboard, and an automated regression test suite.
+
+---
+
+## 📸 Interface Showcase
+
+| Real-Time Chat & Direct Messaging | P2P Video Call & Synthetic Camera HUD |
+| :---: | :---: |
+| ![Real-Time Chat](docs/images/client_chat.png) | ![Video Call HUD](docs/images/video_call.png) |
+
+| Server Management & Telemetry Console | 1-Click Demo Authentication |
+| :---: | :---: |
+| ![Server Dashboard](docs/images/server_dashboard.png) | ![Login Screen](docs/images/login_screen.png) |
 
 ---
 
 ## 🌟 Key Capabilities
 
 ### 1. Pluggable Video Streaming Pipeline (P2P & Relay)
-- **Zero Webcam Hardware Required**: Features an embedded high-performance **Synthetic Camera** (`SyntheticVideoSource`) that generates animated radar sweeps, live milliseconds clocks, randomized audio frequency bars, and user avatar identifiers at 15–20 FPS.
-- **Desktop Screen Sharing**: Features `ScreenCaptureVideoSource` to stream active desktop displays in real-time.
-- **Picture-in-Picture (PIP) & Camera Toggle**: Local preview window rendered simultaneously with remote incoming streams with memory-safe GDI bitmap recycling.
-- **STUN NAT Traversal (RFC 5389)**: Discovers public IP endpoints and performs UDP hole punching for direct P2P streaming.
-- **Automatic Server Relay Fallback**: Automatically falls back to TCP server relay if UDP hole punching is blocked by symmetric NATs.
+- **Zero Webcam Hardware Required**: Features an embedded high-performance **Synthetic Camera** (`SyntheticVideoSource`) that generates animated radar sweeps, live millisecond clocks, dynamic audio frequency bars, and user identity badges at 15–20 FPS.
+- **Desktop Screen Sharing**: Includes `ScreenCaptureVideoSource` to capture and stream the active desktop display in real-time.
+- **Picture-in-Picture (PIP) & Camera Switch**: Local preview window rendered simultaneously over remote incoming streams with memory-safe GDI bitmap recycling.
+- **STUN NAT Traversal (RFC 5389)**: Discovers public IP endpoints and initiates UDP hole punching for direct peer-to-peer streaming.
+- **Automatic Server Relay Fallback**: Seamlessly falls back to TCP server relay when UDP hole punching is blocked by symmetric NATs or restrictive firewalls.
 
 ### 2. End-to-End Cryptography & Security
 - **ECDH Key Exchange**: Implements Diffie-Hellman Elliptic Curve Key Exchange (`DiffieHellmanHelper`) for per-session shared secret negotiation.
@@ -26,24 +40,28 @@ The application demonstrates real-world software engineering best practices, inc
 - **Secure Authentication**: SHA-256 hashed password storage (`UserStore`) with pre-seeded demo credentials.
 
 ### 3. Server Management & Real-Time Telemetry Dashboard
-- **Live Client Directory**: `ListView` displaying client IDs, usernames, display names, IP endpoints, connection timestamps, and packet telemetry.
+- **Live Client Directory**: `ListView` displaying client IDs, usernames, display names, IP endpoints, connection timestamps, and packet counters.
 - **Administrative Controls**: Right-click context menu to disconnect/kick connected clients.
 - **Real-Time HUD**: Live uptime clock, total routed message counters, and host IP address display for LAN discovery.
-- **One-Click Multi-Client Launch**: Button to automatically spin up 2 demo client instances (`alice` and `bob`).
+- **One-Click Multi-Client Launch**: Dedicated button to automatically spin up 2 demo client instances (`alice` and `bob`).
 
 ### 4. Client UX & Quick Demo Workflow
 - **1-Click Demo Login**: Quick-access buttons for pre-seeded users (`👤 Alice`, `👤 Bob`, `👤 Charlie`).
 - **CLI Automation**: Supports command-line auto-login arguments (e.g., `ChatBox.Client.exe demo_alice`).
-- **File Transfer Progress**: Real-time chunk transmission progress (`cur/total chunks` and percentage).
-- **Dedicated Image Previewer**: Automatic modal dialog (`frmImagePreview`) for viewing received `.jpg`, `.png`, `.gif`, and `.bmp` files with dimensions, file size, and explorer shortcuts.
-- **Group & Direct Messaging**: Support for private 1-to-1 conversations and broadcast rooms.
+- **File Transfer Progress**: Real-time chunk transmission progress (`cur/total chunks` and percentage indicator).
+- **Dedicated Image Previewer**: Modal dialog (`frmImagePreview`) for viewing received `.jpg`, `.png`, `.gif`, and `.bmp` files with image dimensions, file size, and explorer shortcuts.
+- **Tabbed Chat Interface**: Dynamic tabs for the public general room and private 1-on-1 conversations with unread indicators.
 
 ### 5. Automated Regression Test Suite (`ChatBox.Tests`)
 - Custom lightweight test runner with zero third-party dependencies verifying:
-  1. Packet serialization, length-prefixed framing, special characters, and Unicode text.
+  1. Packet serialization, length-prefixed framing, and UTF-8 encoding.
   2. AES-256 encryption/decryption roundtrips and ECDH shared key equivalence.
   3. User authentication, password hashing, and message history persistence.
-  4. Video generator frame capture and JPEG SOI header validity.
+  4. Video generator frame capture, synthetic radar animation, and JPEG SOI header validity.
+  5. STUN packet construction and attribute parsing.
+  6. Large file chunking, reassembly, and SHA-256 payload integrity.
+  7. Cryptographic invariants (random IV uniqueness and tamper resistance).
+  8. Floating PIP geometry and boundary clipping.
 
 ---
 
@@ -57,7 +75,7 @@ ChatBoxSimple.sln
 │   ├── Crypto/                   # AES-256-CBC & Diffie-Hellman (ECDH) helpers
 │   ├── DTOs/                     # Network data transfer contracts
 │   ├── Network/StunClient.cs     # RFC 5389 STUN NAT traversal engine
-│   └── Protocol/                 # Packet framing, types, and JSON serialization
+│   └── Protocol/                 # Packet framing, packet types, and JSON serialization
 │
 ├── ChatBox.Server/               # WinForms Server Management Host
 │   ├── Data/                     # UserStore (JSON) & MessageStore (JSON history)
@@ -74,9 +92,12 @@ ChatBoxSimple.sln
 └── ChatBox.Tests/                # Standalone Automated Test Runner (.NET 4.8)
     ├── Program.cs                # Test harness entry point (exit code 0/1)
     ├── ProtocolTests.cs          # Serialization and packet integrity tests
-    ├── CryptoTests.cs            # Cryptographic roundtrip tests
+    ├── CryptoTests.cs            # Cryptographic roundtrip & invariant tests
     ├── StorageTests.cs           # Database and persistence tests
-    └── VideoSourceTests.cs       # Video frame generation and compression tests
+    ├── VideoSourceTests.cs       # Video frame generation, compression & PIP tests
+    ├── StunTests.cs              # RFC 5389 STUN protocol tests
+    ├── FileTransferTests.cs      # Chunking and reassembly tests
+    └── DemoScreenshotGenerator.cs# High-resolution screenshot generator for documentation
 ```
 
 ---
@@ -121,7 +142,7 @@ All demo accounts are pre-seeded in `UserStore` with password `123`:
 
 ### Prerequisites
 - **Operating System**: Windows 10 / 11 / Windows Server 2016+
-- **Runtime**: .NET Framework 4.8 runtime (built into modern Windows)
+- **Runtime**: .NET Framework 4.8 runtime (pre-installed on modern Windows)
 - **Build Tools**: .NET SDK (`dotnet build`) or Visual Studio 2022 / MSBuild
 
 ### Automated 1-Command Demo Launcher
@@ -153,28 +174,31 @@ dotnet build ChatBoxSimple.sln -c Debug
 ```bash
 .\ChatBox.Server\bin\Debug\ChatBox.Server.exe
 ```
-- Click **▶ Khởi động** to open port 9000.
-- Click **⚡ Mở 2 Client Demo** to launch both Alice and Bob simultaneously.
+- Click **▶ Start** to bind port `9000`.
+- Click **⚡ Launch 2 Demo Clients** to launch both Alice and Bob simultaneously.
 
 #### 4. Start the Clients
 ```bash
 .\ChatBox.Client\bin\Debug\ChatBox.Client.exe demo_alice
 .\ChatBox.Client\bin\Debug\ChatBox.Client.exe demo_bob
 ```
+Alternatively, launch `ChatBox.Client.exe` and click **👤 Alice** or **👤 Bob** on the login screen for instant 1-click access.
 
 ---
 
-## 📦 Build & Packaging (`scripts/publish-app.ps1`)
+## 📦 Build & Release Packaging (`scripts/publish-app.ps1`)
 
 In adherence with enterprise deployment standards, the project supports both distribution modes:
 
 ```powershell
-# Full release package:
+# Full release package (includes binaries, assets, and debug symbols):
 powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Full
 
-# Lite release package (binaries only, excludes .pdb symbols):
+# Lite release package (optimized standalone binaries, excludes .pdb symbols):
 powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Lite
 ```
+
+Generated outputs are placed in `publish/Full` and `publish/Lite`, along with redistributable zip archives `SimpleChatBox-v1.0.0-Full.zip` and `SimpleChatBox-v1.0.0-Lite.zip`.
 
 ---
 

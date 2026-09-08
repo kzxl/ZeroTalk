@@ -7,6 +7,14 @@ namespace ChatBox.Tests
         static int Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            if (args != null && args.Length > 0 && (args[0] == "--screenshots" || args[0] == "-s"))
+            {
+                string targetDir = args.Length > 1 ? args[1] : null;
+                DemoScreenshotGenerator.GenerateAll(targetDir);
+                return 0;
+            }
+
             Console.WriteLine("==================================================");
             Console.WriteLine("   ChatBoxSimple Automated Test Suite (.NET 4.8)  ");
             Console.WriteLine("==================================================");

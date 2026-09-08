@@ -46,6 +46,7 @@
     <Compile Include="StorageTests.cs" />
     <Compile Include="VideoSourceTests.cs" />
     <Compile Include="AlgorithmTests.cs" />
+    <Compile Include="DemoScreenshotGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ChatBox.Shared\ChatBox.Shared.csproj">

@@ -55,6 +55,13 @@ Get-ChildItem "$RootDir\ChatBox.Client\bin\$config" -File | ForEach-Object {
     Copy-Item $_.FullName -Destination $clientOut
 }
 
+$zipFile = Join-Path $OutputDir "SimpleChatBox-v1.0.0-$Mode.zip"
+if (Test-Path $zipFile) {
+    Remove-Item $zipFile -Force
+}
+Compress-Archive -Path "$targetDir\*" -DestinationPath $zipFile
+
 Write-Host "`nPublish complete!" -ForegroundColor Green
-Write-Host "Server: $serverOut"
-Write-Host "Client: $clientOut"
+Write-Host "Server:  $serverOut"
+Write-Host "Client:  $clientOut"
+Write-Host "Archive: $zipFile"
