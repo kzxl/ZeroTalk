@@ -15,10 +15,12 @@ namespace ChatBox.Server.Forms
     {
         private TcpServerService _serverService;
         private UserStore _userStore;
+        private readonly bool _autoStart;
 
-        public frmServer()
+        public frmServer(bool autoStart = false)
         {
             InitializeComponent();
+            _autoStart = autoStart;
             _userStore = new UserStore();
             _serverService = new TcpServerService(_userStore);
 
@@ -29,6 +31,15 @@ namespace ChatBox.Server.Forms
             // Hiển thị local IP lúc mở
             string localIp = StunClient.GetLocalIPAddress()?.ToString() ?? "127.0.0.1";
             lblStats.Text = $"⏱ Uptime: --:--:-- | 📦 Gói tin đã chuyển: 0 | 🌐 Local IP: {localIp}:{(int)nudPort.Value}";
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            if (_autoStart)
+            {
+                btnStart_Click(this, EventArgs.Empty);
+            }
         }
 
         private void btnStart_Click(object sender, EventArgs e)

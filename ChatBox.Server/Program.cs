@@ -6,11 +6,15 @@ namespace ChatBox.Server
     static class Program
     {
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Forms.frmServer());
+
+            bool autoStart = args != null && args.Length > 0 && 
+                Array.Exists(args, a => a.Equals("autostart", StringComparison.OrdinalIgnoreCase));
+
+            Application.Run(new Forms.frmServer(autoStart));
         }
     }
 }

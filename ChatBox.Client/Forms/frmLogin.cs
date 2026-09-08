@@ -28,18 +28,30 @@ namespace ChatBox.Client.Forms
             _tcpService = new TcpClientService();
         }
 
-        protected override async void OnShown(EventArgs e)
+        private bool _autoLoginTriggered;
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            TryAutoLogin();
+        }
+
+        protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            TryAutoLogin();
+        }
 
-            if (!string.IsNullOrEmpty(_autoLoginUser))
-            {
-                string username = _autoLoginUser.Replace("demo_", "").Trim().ToLower();
-                txtUsername.Text = username;
-                txtPassword.Text = "123";
-                await Task.Delay(300); // Đợi form hiển thị ổn định
-                await DoAuth(PacketType.Login);
-            }
+        private async void TryAutoLogin()
+        {
+            if (_autoLoginTriggered || string.IsNullOrEmpty(_autoLoginUser)) return;
+            _autoLoginTriggered = true;
+
+            string username = _autoLoginUser.Replace("demo_", "").Trim().ToLower();
+            txtUsername.Text = username;
+            txtPassword.Text = "123";
+            await Task.Delay(200);
+            await DoAuth(PacketType.Login);
         }
 
         private async void btnLogin_Click(object sender, EventArgs e)

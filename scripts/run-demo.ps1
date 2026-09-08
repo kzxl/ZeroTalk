@@ -28,7 +28,7 @@ if ($LASTEXITCODE -ne 0) {
 # 3. Launch Server
 Write-Host "[3/4] Starting Server Dashboard..." -ForegroundColor Yellow
 $serverExe = "$RootDir\ChatBox.Server\bin\Debug\ChatBox.Server.exe"
-Start-Process -FilePath $serverExe -WorkingDirectory (Split-Path -Parent $serverExe)
+Start-Process -FilePath $serverExe -ArgumentList "autostart" -WorkingDirectory (Split-Path -Parent $serverExe)
 
 Start-Sleep -Milliseconds 1500
 
