@@ -66,6 +66,9 @@
     <Compile Include="Services\FileReceiveService.cs" />
     <Compile Include="Services\IVideoCallService.cs" />
     <Compile Include="Services\VideoCallService.cs" />
+    <Compile Include="Services\IVideoSource.cs" />
+    <Compile Include="Services\SyntheticVideoSource.cs" />
+    <Compile Include="Services\ScreenCaptureVideoSource.cs" />
     <Compile Include="Services\UdpPeerService.cs" />
     <Compile Include="Services\IMessageHistoryService.cs" />
     <Compile Include="Services\MessageHistoryService.cs" />

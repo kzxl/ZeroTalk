@@ -24,15 +24,20 @@ namespace ChatBox.Client.Services
 
         public bool IsInCall { get; private set; }
         public string CurrentCallPartner { get; private set; }
+        public string CurrentUserId => _chatService?.CurrentUserId;
         public bool IsP2PConnected => _udpPeer?.IsConnected ?? false;
         public bool UseRelay { get; private set; }
+        public bool IsVideoEnabled { get; set; } = true;
 
         public event Action<string> OnIncomingCall;        // callerUserId
         public event Action OnCallAccepted;
         public event Action<string> OnCallRejected;        // reason
         public event Action OnCallEnded;
         public event Action<byte[]> OnVideoFrameReceived;
+        public event Action<byte[]> OnLocalFrameCaptured;  // local camera / PIP
         public event Action<string> OnLog;                 // log message
+
+        private IVideoSource _videoSource;
 
         // Lưu endpoint info của peer (nhận từ signaling)
         private string _peerPublicIp;
@@ -44,6 +49,72 @@ namespace ChatBox.Client.Services
         {
             _tcpService = tcpService;
             _chatService = chatService;
+        }
+
+        /// <summary>
+        /// Thay đổi nguồn phát video (Synthetic / Screen Share / Webcam)
+        /// </summary>
+        public void SetVideoSource(IVideoSource source)
+        {
+            if (_videoSource != null)
+            {
+                _videoSource.OnFrameCaptured -= HandleLocalFrameCaptured;
+                _videoSource.Stop();
+                _videoSource.Dispose();
+            }
+
+            _videoSource = source;
+            if (_videoSource != null)
+            {
+                _videoSource.OnFrameCaptured += HandleLocalFrameCaptured;
+                if (IsInCall)
+                {
+                    _videoSource.Start(320, 240, 15);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Bật/tắt truyền camera
+        /// </summary>
+        public void ToggleVideo(bool enabled)
+        {
+            IsVideoEnabled = enabled;
+            Log(enabled ? "📷 Đã bật camera" : "📷 Đã tắt camera");
+        }
+
+        private void StartCapturing()
+        {
+            if (_videoSource == null)
+            {
+                _videoSource = new SyntheticVideoSource(_chatService.CurrentUserId);
+                _videoSource.OnFrameCaptured += HandleLocalFrameCaptured;
+            }
+
+            if (!_videoSource.IsRunning)
+            {
+                _videoSource.Start(320, 240, 15);
+                Log($"▶ Đã khởi động nguồn video: {_videoSource.SourceName}");
+            }
+        }
+
+        private void StopCapturing()
+        {
+            if (_videoSource != null && _videoSource.IsRunning)
+            {
+                _videoSource.Stop();
+                Log("⏹ Đã dừng nguồn phát video");
+            }
+        }
+
+        private void HandleLocalFrameCaptured(byte[] frameData)
+        {
+            OnLocalFrameCaptured?.Invoke(frameData);
+
+            if (IsInCall && IsVideoEnabled)
+            {
+                SendVideoFrame(frameData);
+            }
         }
 
         /// <summary>
@@ -109,6 +180,7 @@ namespace ChatBox.Client.Services
                 _tcpService.SendPacket(packet);
 
                 IsInCall = true;
+                StartCapturing();
                 OnCallAccepted?.Invoke();
 
                 // Bắt đầu hole punching
@@ -183,6 +255,7 @@ namespace ChatBox.Client.Services
                     SavePeerEndpoint(packet.Data);
                     IsInCall = true;
                     CurrentCallPartner = packet.SenderId;
+                    StartCapturing();
                     OnCallAccepted?.Invoke();
 
                     // Bắt đầu P2P connection
@@ -267,6 +340,7 @@ namespace ChatBox.Client.Services
 
         private void Cleanup()
         {
+            StopCapturing();
             IsInCall = false;
             CurrentCallPartner = null;
             UseRelay = false;

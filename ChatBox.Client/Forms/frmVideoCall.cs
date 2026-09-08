@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using ChatBox.Client.Helpers;
 using ChatBox.Client.Services;
@@ -7,14 +8,16 @@ using ChatBox.Client.Services;
 namespace ChatBox.Client.Forms
 {
     /// <summary>
-    /// Form gọi video - hiển thị video từ xa và local camera.
-    /// Skeleton - sẽ tích hợp AForge camera capture ở Phase 4.
+    /// Form gọi video - hỗ trợ hiển thị video từ xa và local Picture-in-Picture (PIP).
+    /// Hỗ trợ nguồn video Synthetic Camera & Screen Share.
     /// </summary>
     public partial class frmVideoCall : Form
     {
         private readonly VideoCallService _videoCallService;
         private readonly VideoRecorder _recorder;
         private bool _isRecording;
+        private DateTime _callStartTime;
+        private bool _isFormClosing;
 
         public frmVideoCall(VideoCallService videoCallService)
         {
@@ -23,26 +26,42 @@ namespace ChatBox.Client.Forms
             _recorder = new VideoRecorder();
 
             _videoCallService.OnVideoFrameReceived += DisplayRemoteFrame;
+            _videoCallService.OnLocalFrameCaptured += DisplayLocalFrame;
             _videoCallService.OnCallEnded += HandleCallEnded;
+
+            _callStartTime = DateTime.Now;
+            tmrCallDuration.Start();
+
+            // Khởi tạo nguồn video mặc định
+            if (cmbVideoSource.Items.Count > 0)
+            {
+                cmbVideoSource.SelectedIndex = 0;
+            }
         }
 
         private void DisplayRemoteFrame(byte[] frameData)
         {
+            if (_isFormClosing || IsDisposed) return;
+
             if (InvokeRequired)
             {
-                BeginInvoke(new Action<byte[]>(DisplayRemoteFrame), frameData);
+                try
+                {
+                    BeginInvoke(new Action<byte[]>(DisplayRemoteFrame), frameData);
+                }
+                catch { }
                 return;
             }
 
             try
             {
-                using (var ms = new System.IO.MemoryStream(frameData))
+                using (var ms = new MemoryStream(frameData))
                 {
                     var image = Image.FromStream(ms);
-                    pnlRemoteVideo.Image?.Dispose();
+                    var oldImg = pnlRemoteVideo.Image;
                     pnlRemoteVideo.Image = new Bitmap(image);
+                    oldImg?.Dispose();
 
-                    // Ghi lại nếu đang recording
                     if (_isRecording)
                     {
                         _recorder.AddFrame(frameData);
@@ -52,13 +71,48 @@ namespace ChatBox.Client.Forms
             catch { }
         }
 
-        private void HandleCallEnded()
+        private void DisplayLocalFrame(byte[] frameData)
         {
+            if (_isFormClosing || IsDisposed) return;
+
             if (InvokeRequired)
             {
-                BeginInvoke(new Action(HandleCallEnded));
+                try
+                {
+                    BeginInvoke(new Action<byte[]>(DisplayLocalFrame), frameData);
+                }
+                catch { }
                 return;
             }
+
+            try
+            {
+                using (var ms = new MemoryStream(frameData))
+                {
+                    var image = Image.FromStream(ms);
+                    var oldImg = pnlLocalVideo.Image;
+                    pnlLocalVideo.Image = new Bitmap(image);
+                    oldImg?.Dispose();
+                }
+            }
+            catch { }
+        }
+
+        private void HandleCallEnded()
+        {
+            if (_isFormClosing || IsDisposed) return;
+
+            if (InvokeRequired)
+            {
+                try
+                {
+                    BeginInvoke(new Action(HandleCallEnded));
+                }
+                catch { }
+                return;
+            }
+
+            tmrCallDuration.Stop();
 
             if (_isRecording)
             {
@@ -67,12 +121,63 @@ namespace ChatBox.Client.Forms
             }
 
             lblStatus.Text = "📹 Cuộc gọi đã kết thúc";
-            MessageBox.Show("Cuộc gọi đã kết thúc", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Cuộc gọi đã kết thúc.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             this.Close();
+        }
+
+        private void btnToggleVideo_Click(object sender, EventArgs e)
+        {
+            bool newState = !_videoCallService.IsVideoEnabled;
+            _videoCallService.ToggleVideo(newState);
+
+            if (newState)
+            {
+                btnToggleVideo.Text = "📷 Tắt Cam";
+                btnToggleVideo.BackColor = Color.FromArgb(50, 100, 180);
+            }
+            else
+            {
+                btnToggleVideo.Text = "📷 Bật Cam";
+                btnToggleVideo.BackColor = Color.FromArgb(80, 80, 85);
+                var oldImg = pnlLocalVideo.Image;
+                pnlLocalVideo.Image = null;
+                oldImg?.Dispose();
+            }
+        }
+
+        private void cmbVideoSource_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbVideoSource.SelectedIndex == 0)
+            {
+                _videoCallService.SetVideoSource(new SyntheticVideoSource(_videoCallService.CurrentUserId ?? "User"));
+            }
+            else if (cmbVideoSource.SelectedIndex == 1)
+            {
+                _videoCallService.SetVideoSource(new ScreenCaptureVideoSource());
+            }
+        }
+
+        private void tmrCallDuration_Tick(object sender, EventArgs e)
+        {
+            var elapsed = DateTime.Now - _callStartTime;
+            lblDuration.Text = $"⏱ {elapsed:mm\\:ss}";
+
+            if (_videoCallService.IsP2PConnected && !_videoCallService.UseRelay)
+            {
+                lblConnectionMode.Text = "🟢 P2P Direct";
+                lblConnectionMode.ForeColor = Color.LightGreen;
+            }
+            else
+            {
+                lblConnectionMode.Text = "🟠 Server Relay";
+                lblConnectionMode.ForeColor = Color.Orange;
+            }
         }
 
         private void btnEndCall_Click(object sender, EventArgs e)
         {
+            _isFormClosing = true;
+            tmrCallDuration.Stop();
             _videoCallService.EndCall();
 
             if (_isRecording)
@@ -88,29 +193,53 @@ namespace ChatBox.Client.Forms
         {
             if (!_isRecording)
             {
-                var outputPath = System.IO.Path.Combine(
+                var outputPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory,
                     "Recordings",
                     $"call_{DateTime.Now:yyyyMMdd_HHmmss}.avi");
 
-                var dir = System.IO.Path.GetDirectoryName(outputPath);
-                if (!System.IO.Directory.Exists(dir))
-                    System.IO.Directory.CreateDirectory(dir);
+                var dir = Path.GetDirectoryName(outputPath);
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
 
                 _recorder.StartRecording(outputPath);
                 _isRecording = true;
-                btnRecord.Text = "⏹ Dừng ghi";
+                btnRecord.Text = "⏹ Dừng";
                 btnRecord.BackColor = Color.FromArgb(200, 50, 50);
-                lblStatus.Text = "🔴 Đang ghi hình...";
+                lblStatus.Text = "🔴 Đang ghi";
             }
             else
             {
                 _recorder.StopRecording();
                 _isRecording = false;
-                btnRecord.Text = "⏺ Ghi hình";
-                btnRecord.BackColor = Color.FromArgb(70, 70, 75);
-                lblStatus.Text = "📹 Đang gọi...";
+                btnRecord.Text = "⏺ Ghi";
+                btnRecord.BackColor = Color.FromArgb(65, 65, 72);
+                lblStatus.Text = "📹 Đang đàm thoại";
             }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            _isFormClosing = true;
+            tmrCallDuration.Stop();
+
+            _videoCallService.OnVideoFrameReceived -= DisplayRemoteFrame;
+            _videoCallService.OnLocalFrameCaptured -= DisplayLocalFrame;
+            _videoCallService.OnCallEnded -= HandleCallEnded;
+
+            if (_isRecording)
+            {
+                _recorder.StopRecording();
+                _isRecording = false;
+            }
+
+            pnlRemoteVideo.Image?.Dispose();
+            pnlRemoteVideo.Image = null;
+
+            pnlLocalVideo.Image?.Dispose();
+            pnlLocalVideo.Image = null;
+
+            base.OnFormClosing(e);
         }
     }
 }
