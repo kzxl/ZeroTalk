@@ -1,6 +1,0 @@
-E:\15. Other\ChatBoxSimple\ChatBox.Shared\bin\Debug\ChatBox.Shared.dll
-E:\15. Other\ChatBoxSimple\ChatBox.Shared\bin\Debug\ChatBox.Shared.pdb
-E:\15. Other\ChatBoxSimple\ChatBox.Shared\obj\Debug\ChatBox.Shared.csproj.AssemblyReference.cache
-E:\15. Other\ChatBoxSimple\ChatBox.Shared\obj\Debug\ChatBox.Shared.csproj.CoreCompileInputs.cache
-E:\15. Other\ChatBoxSimple\ChatBox.Shared\obj\Debug\ChatBox.Shared.dll
-E:\15. Other\ChatBoxSimple\ChatBox.Shared\obj\Debug\ChatBox.Shared.pdb
