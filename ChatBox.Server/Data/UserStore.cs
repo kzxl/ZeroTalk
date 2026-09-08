@@ -91,135 +91,68 @@ namespace ChatBox.Server.Data
         {
             _users = new List<UserAccount>();
 
-            if (!File.Exists(_filePath))
-                return;
+            if (File.Exists(_filePath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(_filePath, Encoding.UTF8);
+                    _users = ChatBox.Shared.Protocol.PacketSerializer.FromJson<List<UserAccount>>(json) ?? new List<UserAccount>();
+                }
+                catch
+                {
+                    _users = new List<UserAccount>();
+                }
+            }
 
-            try
+            // Seed default demo accounts if store is empty
+            if (_users.Count == 0)
             {
-                var json = File.ReadAllText(_filePath);
-                // Simple JSON array parsing
-                _users = SimpleJsonDeserializeUsers(json);
+                SeedDemoUsers();
+                SaveUsers();
             }
-            catch
+        }
+
+        private void SeedDemoUsers()
+        {
+            _users.Add(new UserAccount
             {
-                _users = new List<UserAccount>();
-            }
+                UserId = "user_alice",
+                Username = "alice",
+                PasswordHash = HashPassword("123"),
+                DisplayName = "Alice Johnson",
+                CreatedAt = DateTime.Now
+            });
+
+            _users.Add(new UserAccount
+            {
+                UserId = "user_bob",
+                Username = "bob",
+                PasswordHash = HashPassword("123"),
+                DisplayName = "Bob Williams",
+                CreatedAt = DateTime.Now
+            });
+
+            _users.Add(new UserAccount
+            {
+                UserId = "user_charlie",
+                Username = "charlie",
+                PasswordHash = HashPassword("123"),
+                DisplayName = "Charlie Davis",
+                CreatedAt = DateTime.Now
+            });
         }
 
         private void SaveUsers()
         {
             try
             {
-                var json = SimpleJsonSerializeUsers(_users);
-                File.WriteAllText(_filePath, json);
+                var json = ChatBox.Shared.Protocol.PacketSerializer.ToJson(_users);
+                File.WriteAllText(_filePath, json, Encoding.UTF8);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving users: {ex.Message}");
             }
         }
-
-        #region Simple JSON Serialization
-
-        private string SimpleJsonSerializeUsers(List<UserAccount> users)
-        {
-            var sb = new StringBuilder("[");
-            for (int i = 0; i < users.Count; i++)
-            {
-                if (i > 0) sb.Append(",");
-                var u = users[i];
-                sb.Append("{");
-                sb.AppendFormat("\"UserId\":\"{0}\"", Escape(u.UserId));
-                sb.AppendFormat(",\"Username\":\"{0}\"", Escape(u.Username));
-                sb.AppendFormat(",\"PasswordHash\":\"{0}\"", Escape(u.PasswordHash));
-                sb.AppendFormat(",\"DisplayName\":\"{0}\"", Escape(u.DisplayName));
-                sb.AppendFormat(",\"CreatedAt\":\"{0:O}\"", u.CreatedAt);
-                sb.Append("}");
-            }
-            sb.Append("]");
-            return sb.ToString();
-        }
-
-        private List<UserAccount> SimpleJsonDeserializeUsers(string json)
-        {
-            var result = new List<UserAccount>();
-            if (string.IsNullOrEmpty(json) || json.Trim() == "[]")
-                return result;
-
-            // Split by },{
-            json = json.Trim().TrimStart('[').TrimEnd(']');
-            var objects = SplitJsonObjects(json);
-
-            foreach (var obj in objects)
-            {
-                var user = new UserAccount();
-                user.UserId = ExtractValue(obj, "UserId");
-                user.Username = ExtractValue(obj, "Username");
-                user.PasswordHash = ExtractValue(obj, "PasswordHash");
-                user.DisplayName = ExtractValue(obj, "DisplayName");
-
-                var createdStr = ExtractValue(obj, "CreatedAt");
-                DateTime dt;
-                if (DateTime.TryParse(createdStr, out dt))
-                    user.CreatedAt = dt;
-
-                result.Add(user);
-            }
-
-            return result;
-        }
-
-        private List<string> SplitJsonObjects(string json)
-        {
-            var objects = new List<string>();
-            int depth = 0;
-            int start = 0;
-
-            for (int i = 0; i < json.Length; i++)
-            {
-                if (json[i] == '{') depth++;
-                else if (json[i] == '}')
-                {
-                    depth--;
-                    if (depth == 0)
-                    {
-                        objects.Add(json.Substring(start, i - start + 1));
-                        start = i + 1;
-                        // Skip comma
-                        while (start < json.Length && (json[start] == ',' || json[start] == ' '))
-                            start++;
-                    }
-                }
-            }
-
-            return objects;
-        }
-
-        private string ExtractValue(string json, string key)
-        {
-            var search = "\"" + key + "\":\"";
-            int idx = json.IndexOf(search, StringComparison.Ordinal);
-            if (idx < 0) return null;
-
-            idx += search.Length;
-            int end = json.IndexOf('"', idx);
-            if (end < 0) return null;
-
-            return Unescape(json.Substring(idx, end - idx));
-        }
-
-        private string Escape(string s)
-        {
-            if (s == null) return "";
-            return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
-        }
-
-        private string Unescape(string s)
-        {
-            if (s == null) return "";
-            return s.Replace("\\\"", "\"").Replace("\\\\", "\\");
-        }
-
-        #endregion
     }
 }

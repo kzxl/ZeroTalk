@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using System.Web.Script.Serialization;
 
 namespace ChatBox.Shared.Protocol
 {
@@ -11,22 +12,18 @@ namespace ChatBox.Shared.Protocol
     /// </summary>
     public static class PacketSerializer
     {
+        private static readonly JavaScriptSerializer _serializer = new JavaScriptSerializer
+        {
+            MaxJsonLength = int.MaxValue
+        };
+
         /// <summary>
         /// Serialize packet thành JSON string
         /// </summary>
         public static string Serialize(Packet packet)
         {
-            // Simple JSON serialization without Newtonsoft dependency
-            // Using basic string building for .NET Framework compatibility
-            var sb = new StringBuilder();
-            sb.Append("{");
-            sb.AppendFormat("\"Type\":{0}", (int)packet.Type);
-            sb.AppendFormat(",\"SenderId\":{0}", JsonEscape(packet.SenderId));
-            sb.AppendFormat(",\"ReceiverId\":{0}", JsonEscape(packet.ReceiverId));
-            sb.AppendFormat(",\"Data\":{0}", JsonEscape(packet.Data));
-            sb.AppendFormat(",\"Timestamp\":\"{0:O}\"", packet.Timestamp);
-            sb.Append("}");
-            return sb.ToString();
+            if (packet == null) return null;
+            return _serializer.Serialize(packet);
         }
 
         /// <summary>
@@ -34,25 +31,40 @@ namespace ChatBox.Shared.Protocol
         /// </summary>
         public static Packet Deserialize(string json)
         {
-            if (string.IsNullOrEmpty(json))
-                return null;
-
-            var packet = new Packet();
-            // Simple JSON parsing
-            packet.Type = (PacketType)GetIntValue(json, "Type");
-            packet.SenderId = GetStringValue(json, "SenderId");
-            packet.ReceiverId = GetStringValue(json, "ReceiverId");
-            packet.Data = GetStringValue(json, "Data");
-
-            var timestampStr = GetStringValue(json, "Timestamp");
-            if (!string.IsNullOrEmpty(timestampStr))
+            if (string.IsNullOrEmpty(json)) return null;
+            try
             {
-                DateTime ts;
-                if (DateTime.TryParse(timestampStr, out ts))
-                    packet.Timestamp = ts;
+                return _serializer.Deserialize<Packet>(json);
             }
+            catch
+            {
+                return null;
+            }
+        }
 
-            return packet;
+        /// <summary>
+        /// Helper serialize đối tượng bất kỳ thành JSON string
+        /// </summary>
+        public static string ToJson<T>(T obj)
+        {
+            if (obj == null) return null;
+            return _serializer.Serialize(obj);
+        }
+
+        /// <summary>
+        /// Helper deserialize JSON string thành đối tượng kiểu T
+        /// </summary>
+        public static T FromJson<T>(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return default(T);
+            try
+            {
+                return _serializer.Deserialize<T>(json);
+            }
+            catch
+            {
+                return default(T);
+            }
         }
 
         /// <summary>
@@ -119,105 +131,5 @@ namespace ChatBox.Shared.Protocol
 
             return buffer;
         }
-
-        #region Simple JSON Helpers
-
-        private static string JsonEscape(string value)
-        {
-            if (value == null) return "null";
-
-            var sb = new StringBuilder("\"");
-            foreach (char c in value)
-            {
-                switch (c)
-                {
-                    case '"': sb.Append("\\\""); break;
-                    case '\\': sb.Append("\\\\"); break;
-                    case '\n': sb.Append("\\n"); break;
-                    case '\r': sb.Append("\\r"); break;
-                    case '\t': sb.Append("\\t"); break;
-                    default: sb.Append(c); break;
-                }
-            }
-            sb.Append("\"");
-            return sb.ToString();
-        }
-
-        private static int GetIntValue(string json, string key)
-        {
-            var search = "\"" + key + "\":";
-            int idx = json.IndexOf(search, StringComparison.Ordinal);
-            if (idx < 0) return 0;
-
-            idx += search.Length;
-            var sb = new StringBuilder();
-            while (idx < json.Length && (char.IsDigit(json[idx]) || json[idx] == '-'))
-            {
-                sb.Append(json[idx]);
-                idx++;
-            }
-
-            int result;
-            return int.TryParse(sb.ToString(), out result) ? result : 0;
-        }
-
-        private static string GetStringValue(string json, string key)
-        {
-            var search = "\"" + key + "\":";
-            int idx = json.IndexOf(search, StringComparison.Ordinal);
-            if (idx < 0) return null;
-
-            idx += search.Length;
-
-            // Skip whitespace
-            while (idx < json.Length && json[idx] == ' ') idx++;
-
-            if (idx >= json.Length) return null;
-
-            // Check for null
-            if (json[idx] == 'n')
-                return null;
-
-            if (json[idx] != '"')
-                return null;
-
-            idx++; // skip opening quote
-            var sb = new StringBuilder();
-            bool escaped = false;
-            while (idx < json.Length)
-            {
-                char c = json[idx];
-                if (escaped)
-                {
-                    switch (c)
-                    {
-                        case '"': sb.Append('"'); break;
-                        case '\\': sb.Append('\\'); break;
-                        case 'n': sb.Append('\n'); break;
-                        case 'r': sb.Append('\r'); break;
-                        case 't': sb.Append('\t'); break;
-                        default: sb.Append(c); break;
-                    }
-                    escaped = false;
-                }
-                else if (c == '\\')
-                {
-                    escaped = true;
-                }
-                else if (c == '"')
-                {
-                    break;
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-                idx++;
-            }
-
-            return sb.ToString();
-        }
-
-        #endregion
     }
 }

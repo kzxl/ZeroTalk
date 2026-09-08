@@ -76,22 +76,7 @@ namespace ChatBox.Server.Data
         public string SerializeHistory(List<ChatRecord> records)
         {
             if (records == null || records.Count == 0) return "[]";
-
-            var sb = new StringBuilder();
-            sb.Append("[");
-            for (int i = 0; i < records.Count; i++)
-            {
-                if (i > 0) sb.Append(",");
-                sb.Append("{");
-                sb.AppendFormat("\"SenderId\":\"{0}\",", EscapeJson(records[i].SenderId));
-                sb.AppendFormat("\"SenderName\":\"{0}\",", EscapeJson(records[i].SenderName));
-                sb.AppendFormat("\"Content\":\"{0}\",", EscapeJson(records[i].Content));
-                sb.AppendFormat("\"IsFile\":{0},", records[i].IsFile ? "true" : "false");
-                sb.AppendFormat("\"Timestamp\":\"{0}\"", records[i].Timestamp.ToString("o"));
-                sb.Append("}");
-            }
-            sb.Append("]");
-            return sb.ToString();
+            return ChatBox.Shared.Protocol.PacketSerializer.ToJson(records);
         }
 
         private string GetConversationKey(string userId1, string userId2)
@@ -105,8 +90,6 @@ namespace ChatBox.Server.Data
             return ids[0] + "_" + ids[1];
         }
 
-        #region File I/O (simple JSON manual serialization)
-
         private List<ChatRecord> LoadRecords(string filePath)
         {
             if (!File.Exists(filePath))
@@ -115,7 +98,7 @@ namespace ChatBox.Server.Data
             try
             {
                 string json = File.ReadAllText(filePath, Encoding.UTF8);
-                return ParseRecords(json);
+                return ChatBox.Shared.Protocol.PacketSerializer.FromJson<List<ChatRecord>>(json) ?? new List<ChatRecord>();
             }
             catch
             {
@@ -125,89 +108,16 @@ namespace ChatBox.Server.Data
 
         private void SaveRecords(string filePath, List<ChatRecord> records)
         {
-            string json = SerializeHistory(records);
-            File.WriteAllText(filePath, json, Encoding.UTF8);
-        }
-
-        private List<ChatRecord> ParseRecords(string json)
-        {
-            var list = new List<ChatRecord>();
-            if (string.IsNullOrEmpty(json) || json == "[]") return list;
-
-            // Simple JSON array parsing
-            int i = 0;
-            while (i < json.Length)
+            try
             {
-                int objStart = json.IndexOf('{', i);
-                if (objStart < 0) break;
-
-                int objEnd = json.IndexOf('}', objStart);
-                if (objEnd < 0) break;
-
-                string obj = json.Substring(objStart, objEnd - objStart + 1);
-                var record = new ChatRecord
-                {
-                    SenderId = GetField(obj, "SenderId"),
-                    SenderName = GetField(obj, "SenderName"),
-                    Content = GetField(obj, "Content"),
-                    IsFile = GetField(obj, "IsFile") == "true",
-                };
-
-                string ts = GetField(obj, "Timestamp");
-                DateTime dt;
-                if (DateTime.TryParse(ts, out dt))
-                    record.Timestamp = dt;
-
-                list.Add(record);
-                i = objEnd + 1;
+                string json = SerializeHistory(records);
+                File.WriteAllText(filePath, json, Encoding.UTF8);
             }
-            return list;
-        }
-
-        private string GetField(string json, string field)
-        {
-            var search = "\"" + field + "\":";
-            int idx = json.IndexOf(search, StringComparison.Ordinal);
-            if (idx < 0) return null;
-            idx += search.Length;
-            while (idx < json.Length && json[idx] == ' ') idx++;
-            if (idx >= json.Length) return null;
-
-            if (json[idx] == '"')
+            catch (Exception ex)
             {
-                idx++;
-                var sb = new StringBuilder();
-                bool escaped = false;
-                while (idx < json.Length)
-                {
-                    char c = json[idx];
-                    if (escaped) { sb.Append(c); escaped = false; }
-                    else if (c == '\\') { escaped = true; }
-                    else if (c == '"') { break; }
-                    else { sb.Append(c); }
-                    idx++;
-                }
-                return sb.ToString();
-            }
-            else
-            {
-                var sb = new StringBuilder();
-                while (idx < json.Length && json[idx] != ',' && json[idx] != '}')
-                {
-                    sb.Append(json[idx]);
-                    idx++;
-                }
-                return sb.ToString().Trim();
+                System.Diagnostics.Debug.WriteLine($"Error saving chat records: {ex.Message}");
             }
         }
-
-        private string EscapeJson(string s)
-        {
-            if (s == null) return "";
-            return s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
-        }
-
-        #endregion
     }
 
     /// <summary>
