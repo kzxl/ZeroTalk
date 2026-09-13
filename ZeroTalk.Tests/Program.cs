@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace ZeroTalk.Tests
 {
@@ -53,6 +53,7 @@ namespace ZeroTalk.Tests
             RunTest("Algorithm: File Chunking BVA & Out-of-Order Reassembly", AlgorithmTests.RunChunkingTests);
             RunTest("Algorithm: Cryptographic Invariants (ECDH Commutativity & IV Entropy)", AlgorithmTests.RunCryptoInvariantTests);
             RunTest("Algorithm: Radar Sweep Trigonometric Periodic Geometry", AlgorithmTests.RunGeometryTests);
+            RunTest("VoiceCall: Audio Frame Streaming & VAD Silence Suppression", AlgorithmTests.RunVoiceCallSessionTests);
 
             Console.WriteLine("--------------------------------------------------");
             Console.WriteLine($"Summary: {passed} passed, {failed} failed.");

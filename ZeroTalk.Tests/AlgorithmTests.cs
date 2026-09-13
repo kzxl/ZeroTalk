@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -22,6 +22,7 @@ namespace ZeroTalk.Tests
             RunChunkingTests();
             RunCryptoInvariantTests();
             RunGeometryTests();
+            RunVoiceCallSessionTests();
         }
 
         public static void RunStunTests()
@@ -325,6 +326,87 @@ namespace ZeroTalk.Tests
 
                 Assert.True(distSquared <= maxAllowed, $"Point at {deg} degrees ({x}, {y}) must lie within radius {r}");
             }
+        }
+
+        #endregion
+
+        #region Category 5: Voice Call Session & Audio Frame Streaming
+
+        public static void RunVoiceCallSessionTests()
+        {
+            TestVoiceCall_AudioFrameHeader_SerializationRoundTrip();
+            TestVoiceCall_SilenceSuppression_DropsSilenceFrames();
+            TestVoiceCall_ActiveAudio_SendsPacketAndTracksLoss();
+        }
+
+        private static void TestVoiceCall_AudioFrameHeader_SerializationRoundTrip()
+        {
+            var header = new AudioFrameHeader
+            {
+                SequenceNumber = 1042,
+                TimestampMs = 45000,
+                SampleRate = 48000,
+                Channels = 2,
+                PayloadSize = 960,
+                IsVoiceDetected = true
+            };
+
+            var bytes = header.Serialize();
+            var parsed = AudioFrameHeader.Deserialize(bytes);
+
+            Assert.Equal((uint)1042, parsed.SequenceNumber);
+            Assert.Equal((uint)45000, parsed.TimestampMs);
+            Assert.Equal(48000, parsed.SampleRate);
+            Assert.Equal(2, parsed.Channels);
+            Assert.Equal(960, parsed.PayloadSize);
+            Assert.True(parsed.IsVoiceDetected);
+        }
+
+        private static void TestVoiceCall_SilenceSuppression_DropsSilenceFrames()
+        {
+            var session = new VoiceCallSessionService { VadThreshold = 0.05f };
+            byte[] silencePcm = new byte[960]; // all zeros
+
+            bool sent = session.ProcessOutgoingAudio(silencePcm);
+
+            Assert.False(sent, "Silent frames should be suppressed");
+            Assert.Equal(1L, session.SilenceFramesSuppressed);
+            Assert.Equal(0L, session.PacketsSent);
+        }
+
+        private static void TestVoiceCall_ActiveAudio_SendsPacketAndTracksLoss()
+        {
+            var session = new VoiceCallSessionService { VadThreshold = 0.01f };
+            byte[] activePcm = new byte[960];
+            for (int i = 0; i < activePcm.Length; i += 2)
+            {
+                short val = (short)(i % 4 == 0 ? 15000 : -15000);
+                activePcm[i] = (byte)(val & 0xFF);
+                activePcm[i + 1] = (byte)((val >> 8) & 0xFF);
+            }
+
+            byte[] capturedPacket = null;
+            session.OnOutgoingAudioPacketReady += (pkt) => capturedPacket = pkt;
+
+            bool sent = session.ProcessOutgoingAudio(activePcm);
+
+            Assert.True(sent, "Active speech audio should be packetized");
+            Assert.NotNull(capturedPacket);
+            Assert.Equal(1L, session.PacketsSent);
+
+            // Test incoming parsing
+            byte[] receivedAudio = null;
+            AudioFrameHeader receivedHeader = null;
+            session.OnIncomingAudioFrame += (data, h) =>
+            {
+                receivedAudio = data;
+                receivedHeader = h;
+            };
+
+            bool processed = session.ProcessIncomingAudioPacket(capturedPacket);
+            Assert.True(processed);
+            Assert.NotNull(receivedAudio);
+            Assert.Equal((uint)1, receivedHeader.SequenceNumber);
         }
 
         #endregion
