@@ -23,8 +23,9 @@ if (Test-Path $targetDir) {
 New-Item -ItemType Directory -Path $targetDir | Out-Null
 
 Write-Host "[1/3] Building solution in $config configuration..." -ForegroundColor Yellow
-& dotnet build "$RootDir\ChatBoxSimple.sln" -c $config
+& dotnet build "$RootDir\ZeroTalk.sln" -c $config
 if ($LASTEXITCODE -ne 0) {
+
     Write-Error "Build failed!"
     exit 1
 }
