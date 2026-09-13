@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A1B2C3D4-4444-4444-4444-000000000004}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ZeroTalk.Tests</RootNamespace>
+    <AssemblyName>ZeroTalk.Tests</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="TestFramework.cs" />
+    <Compile Include="ProtocolTests.cs" />
+    <Compile Include="CryptoTests.cs" />
+    <Compile Include="StorageTests.cs" />
+    <Compile Include="VideoSourceTests.cs" />
+    <Compile Include="AlgorithmTests.cs" />
+    <Compile Include="DemoScreenshotGenerator.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ZeroTalk.Shared\ZeroTalk.Shared.csproj">
+      <Project>{A1B2C3D4-1111-1111-1111-000000000001}</Project>
+      <Name>ZeroTalk.Shared</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ZeroTalk.Server\ZeroTalk.Server.csproj">
+      <Project>{A1B2C3D4-2222-2222-2222-000000000002}</Project>
+      <Name>ZeroTalk.Server</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ZeroTalk.Client\ZeroTalk.Client.csproj">
+      <Project>{A1B2C3D4-3333-3333-3333-000000000003}</Project>
+      <Name>ZeroTalk.Client</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
