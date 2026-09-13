@@ -1,4 +1,4 @@
-# SimpleChatBox
+# 🌌 ZeroTalk — Sovereign Real-Time P2P & E2EE Communication Suite
 
 [![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/)
 [![Dependencies](https://img.shields.io/badge/NuGet-Zero%20Dependencies-brightgreen.svg)]()
@@ -7,7 +7,7 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20P2P%20%2B%20Relay-orange.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**SimpleChatBox** is a high-performance, enterprise-grade real-time chat and multimedia communication platform built on C# Windows Forms and .NET Framework 4.8. It operates with **zero external NuGet package dependencies**, relying solely on native .NET Base Class Libraries (BCL).
+**ZeroTalk** is a sovereign, high-performance real-time communication platform engineered for local networks and distributed operations. Operating with **zero external NuGet package dependencies**, it runs on pure C# and native .NET Framework Base Class Libraries (BCL). Part of the **ZeroUniverse** application suite, it combines military-grade cryptography with low-latency multimedia streaming.
 
 The platform showcases robust software engineering patterns: length-prefixed TCP binary framing, ECDH shared secret negotiation, AES-256-CBC end-to-end encryption, STUN NAT traversal with UDP hole punching, server relay fallback, pluggable synthetic camera video capture, desktop screen sharing, a live telemetry server dashboard, and an automated regression test suite.
 
@@ -198,9 +198,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Full
 powershell -ExecutionPolicy Bypass -File .\scripts\publish-app.ps1 -Mode Lite
 ```
 
-Generated outputs are placed in `publish/Full` and `publish/Lite`, along with redistributable zip archives `SimpleChatBox-v1.1.0-Full.zip` and `SimpleChatBox-v1.1.0-Lite.zip`.
+Generated outputs are placed in `publish/Full` and `publish/Lite`, along with redistributable zip archives `ZeroTalk-v1.1.0-Full.zip` and `ZeroTalk-v1.1.0-Lite.zip`.
 
 ---
 
 ## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. Part of the **ZeroUniverse** ecosystem.
