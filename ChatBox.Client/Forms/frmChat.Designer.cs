@@ -42,7 +42,7 @@ namespace ChatBox.Client.Forms
             // 
             // pnlTopBar
             // 
-            this.pnlTopBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(40)))));
+            this.pnlTopBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(26)))), ((int)(((byte)(40)))));
             this.pnlTopBar.Controls.Add(this.lblCurrentUser);
             this.pnlTopBar.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlTopBar.Location = new System.Drawing.Point(0, 0);
@@ -55,12 +55,12 @@ namespace ChatBox.Client.Forms
             // 
             this.lblCurrentUser.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblCurrentUser.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblCurrentUser.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(255)))));
+            this.lblCurrentUser.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(129)))), ((int)(((byte)(140)))), ((int)(((byte)(248)))));
             this.lblCurrentUser.Location = new System.Drawing.Point(10, 5);
             this.lblCurrentUser.Name = "lblCurrentUser";
             this.lblCurrentUser.Size = new System.Drawing.Size(880, 25);
             this.lblCurrentUser.TabIndex = 0;
-            this.lblCurrentUser.Text = "💬 ChatBox";
+            this.lblCurrentUser.Text = "💬 ZeroTalk";
             this.lblCurrentUser.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // splitMain
@@ -270,7 +270,7 @@ namespace ChatBox.Client.Forms
             this.MinimumSize = new System.Drawing.Size(700, 500);
             this.Name = "frmChat";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "ChatBox";
+            this.Text = "ZeroTalk (ZeroUniverse)";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmChat_FormClosing);
             this.splitMain.Panel1.ResumeLayout(false);
             this.splitMain.Panel2.ResumeLayout(false);

@@ -42,7 +42,7 @@ namespace ChatBox.Client.Forms
             // 
             // pnlMain
             // 
-            this.pnlMain.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
+            this.pnlMain.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(26)))), ((int)(((byte)(40)))));
             this.pnlMain.Controls.Add(this.lblStatus);
             this.pnlMain.Controls.Add(this.pnlDemo);
             this.pnlMain.Controls.Add(this.lblDemo);
@@ -272,12 +272,12 @@ namespace ChatBox.Client.Forms
             // 
             this.lblTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(255)))));
+            this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(129)))), ((int)(((byte)(140)))), ((int)(((byte)(248)))));
             this.lblTitle.Location = new System.Drawing.Point(25, 20);
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(290, 60);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "💬 ChatBox";
+            this.lblTitle.Text = "💬 ZeroTalk";
             this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // frmLogin
@@ -285,7 +285,7 @@ namespace ChatBox.Client.Forms
             this.AcceptButton = this.btnLogin;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(35)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(17)))), ((int)(((byte)(19)))), ((int)(((byte)(31)))));
             this.ClientSize = new System.Drawing.Size(500, 525);
             this.Controls.Add(this.pnlMain);
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
@@ -293,7 +293,7 @@ namespace ChatBox.Client.Forms
             this.MaximizeBox = false;
             this.Name = "frmLogin";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "ChatBox - Sign In";
+            this.Text = "ZeroTalk — Sign In (ZeroUniverse)";
             this.pnlMain.ResumeLayout(false);
             this.pnlMain.PerformLayout();
             this.pnlDemo.ResumeLayout(false);
