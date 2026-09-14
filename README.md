@@ -1,11 +1,13 @@
 # 🌌 ZeroTalk — Sovereign Real-Time P2P & E2EE Communication Suite
 
-[![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/)
-[![Dependencies](https://img.shields.io/badge/NuGet-Zero%20Dependencies-brightgreen.svg)]()
-[![Platform](https://img.shields.io/badge/Platform-Windows%20Forms-blueviolet.svg)]()
-[![Tests](https://img.shields.io/badge/Tests-8%2F8%20Passing-brightgreen.svg)]()
-[![Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20P2P%20%2B%20Relay-orange.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Type: Desktop Application](https://img.shields.io/badge/Type-Desktop%20Application%20(Client%20%26%20Server)-007ACC?style=flat-square&logo=windows)](https://github.com/kzxl/ZeroTalk)
+[![Ecosystem](https://img.shields.io/badge/Ecosystem-ZeroUniverse-8A2BE2?style=flat-square)](https://github.com/kzxl/ZeroUniverse)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20Forms%20x64-blueviolet.svg?style=flat-square)](https://dotnet.microsoft.com/)
+[![Distribution](https://img.shields.io/badge/Distribution-Standalone%20Executables-2ea44f?style=flat-square)](https://github.com/kzxl/ZeroTalk)
+[![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg?style=flat-square)](https://dotnet.microsoft.com/)
+[![Dependencies](https://img.shields.io/badge/NuGet-Zero%20Dependencies-brightgreen.svg?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+
 
 **ZeroTalk** is a sovereign, high-performance real-time communication platform engineered for local networks and distributed operations. Operating with **zero external NuGet package dependencies**, it runs on pure C# and native .NET Framework Base Class Libraries (BCL). Part of the **ZeroUniverse** application suite, it combines military-grade cryptography with low-latency multimedia streaming.
 
